@@ -19,4 +19,5 @@ jobs:
           cache: npm
           cache-dependency-path: tests/package-lock.json
       - run: npm ci --prefix tests
-      - run: npm test
+      # full set: engine and optimizer on more random cases, plus the end-to-end checks in the runner's Chrome
+      - run: npm run test:full

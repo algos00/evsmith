@@ -1,0 +1,11 @@
+name: Idea or request
+description: Something EVSmith could do better.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to do with EVSmith?
+      description: Describe the situation in a battle or while building a team, not only the button you imagine.
+    validations:
+      required: true

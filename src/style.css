@@ -18,7 +18,7 @@ h2{font:600 18px/1.2 "Chakra Petch",system-ui,sans-serif;margin:0 0 10px}
 label{display:block;font-size:13px;color:var(--mu);margin:9px 0 2px}
 label.ck{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:14px;color:var(--tx)}
 label.ck input{width:18px;height:18px;accent-color:var(--ac)}
-select,input[type=number],input[type=text],input.ac{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);font:inherit;margin-top:3px}
+select,textarea,input[type=number],input[type=text],input.ac{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);font:inherit;margin-top:3px}
 select:focus,input:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g3,.g6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .gc{border:1px solid var(--bd);border-left:5px solid var(--k,var(--bd));border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--card2)}
@@ -80,7 +80,7 @@ main{max-width:1240px;padding:28px 28px 12px}
 /* =====================================================================
    v2 look: glass cards, type-coloured aurora, Pokémon pictures, radar
    ===================================================================== */
-:root{--ty1:#0f766e;--ty2:#3b82e0;--r:20px;--shadow:0 1px 0 rgba(255,255,255,.55) inset,0 10px 30px -12px rgba(8,40,38,.28),0 2px 6px rgba(8,40,38,.06)}
+:root{--ty1:#0f766e;--ty2:#3b82e0;--go1:#0f766e;--go2:#2b6fc4;--ink:#ffffff;--r:20px;--shadow:0 1px 0 rgba(255,255,255,.55) inset,0 10px 30px -12px rgba(8,40,38,.28),0 2px 6px rgba(8,40,38,.06)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--shadow:0 1px 0 rgba(255,255,255,.06) inset,0 14px 40px -14px rgba(0,0,0,.7),0 2px 8px rgba(0,0,0,.35)}}
 :root[data-theme="dark"]{--shadow:0 1px 0 rgba(255,255,255,.06) inset,0 14px 40px -14px rgba(0,0,0,.7),0 2px 8px rgba(0,0,0,.35)}
 body{background:var(--bg);position:relative;min-height:100vh}
@@ -91,7 +91,7 @@ body::after{width:720px;height:720px;right:-220px;top:120px;background:radial-gr
 :root[data-theme="dark"] body::before,:root[data-theme="dark"] body::after{opacity:.26}
 @keyframes drift{to{transform:translate3d(60px,40px,0) scale(1.12)}}
 .card,details.card{background:color-mix(in srgb,var(--card) 84%,transparent);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid color-mix(in srgb,var(--bd) 80%,transparent);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
-.n{background:linear-gradient(135deg,var(--ty1),var(--ty2));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25);box-shadow:0 4px 12px -4px var(--ty1);width:30px;height:30px;border-radius:10px}
+.n{background:linear-gradient(135deg,var(--go1,var(--ty1)),var(--go2,var(--ty2)));color:var(--ink,#fff);box-shadow:0 4px 12px -4px var(--ty1);width:30px;height:30px;border-radius:10px}
 h2{letter-spacing:.01em}
 /* header */
 .top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;min-height:120px}
@@ -145,7 +145,7 @@ h1{background:linear-gradient(100deg,var(--s0),var(--s2) 40%,var(--s3) 62%,var(-
 /* table of all Pokémon */
 #amT td.nm{display:flex;align-items:center;gap:8px;min-width:140px;font-weight:600}
 /* buttons */
-#go{background:linear-gradient(135deg,var(--ty1),var(--ty2));color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.3);box-shadow:0 6px 0 -2px color-mix(in srgb,var(--ty1) 55%,#000),0 14px 26px -10px var(--ty1);transition:filter .15s,transform .1s;border-radius:16px}
+#go{background:linear-gradient(135deg,var(--go1,var(--ty1)),var(--go2,var(--ty2)));color:var(--ink,#fff);box-shadow:0 6px 0 -2px color-mix(in srgb,var(--ty1) 55%,#000),0 14px 26px -10px var(--ty1);transition:filter .15s,transform .1s;border-radius:16px}
 #go:hover:not(:disabled){filter:brightness(1.08) saturate(1.1)}
 #go:active{transform:translateY(3px);box-shadow:0 2px 0 -1px color-mix(in srgb,var(--ty1) 55%,#000),0 6px 14px -8px var(--ty1)}
 .add{border-radius:14px;transition:background .15s,transform .1s}.add:hover{background:color-mix(in srgb,var(--k) 14%,transparent)}
@@ -175,3 +175,17 @@ footer.disc{padding:16px;border:1px solid var(--bd);border-radius:var(--r);backg
 .top-in{flex:0 1 56%}
 @media (min-width:640px) and (max-width:999px){.hero-art{flex:1 1 0;min-width:250px}.ha2{display:none}}
 @media (min-width:1000px){.top-in{flex:0 1 auto}}
+
+/* accessibility */
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.aci.act{background:color-mix(in srgb,var(--ac) 22%,transparent);box-shadow:inset 3px 0 0 var(--ac)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+
+.cta{display:flex;gap:8px;align-items:stretch}.cta #go{flex:1}
+#check{flex:0 0 auto;padding:0 16px;border-radius:16px;border:1.5px solid var(--ty1);background:color-mix(in srgb,var(--card) 82%,transparent);color:var(--tx);font:600 15px "Chakra Petch",system-ui,sans-serif;backdrop-filter:blur(8px)}
+#check:hover{background:color-mix(in srgb,var(--ty1) 16%,var(--card))}
+@media (max-width:420px){#check{padding:0 10px;font-size:13px}}
+
+textarea{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;resize:vertical}
+
+@media (max-width:639px){.ha1{display:none}.ha0{width:88px;height:88px;right:2px;top:10px}.hero-art{min-width:100px}}

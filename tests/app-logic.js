@@ -22,6 +22,9 @@ const pureStart = ui.indexOf('/* ---------- share & export (pure'), pureEnd = ui
 assert(pureStart > 0 && pureEnd > pureStart, 'pure block markers not found');
 const code = `
 var DEX=POKEDEX_CHAMPIONS,MV=MOVES_CHAMPIONS,ABL=ABILITIES_CHAMPIONS,ITL=ITEMS_CHAMPIONS;
+var LANG='en';
+${fn('N_')}
+${fn('tr')}
 ${stmt('var STA=')}
 ${stmt('var WE=')}
 ${stmt('var CK=')}
@@ -31,7 +34,7 @@ var THR=[];for(var q=16;q>=1;q--)THR.push([String(q/16),q===16?'100% (always)':(
 ${fn('newGoal')}
 ${ui.slice(dispStart, dispEnd)}
 ${ui.slice(pureStart, pureEnd)}
-globalThis.T={spriteUrls:spriteUrls,typeChips:typeChips,spriteImg:spriteImg,radar:radar,TYC:TYC,tyInk:tyInk,SPRITE_HOST:SPRITE_HOST,cleanState:cleanState,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
+globalThis.T={parseShowdownSet:parseShowdownSet,btnColors:btnColors,contrastOf:contrastOf,spriteUrls:spriteUrls,typeChips:typeChips,spriteImg:spriteImg,radar:radar,TYC:TYC,tyInk:tyInk,SPRITE_HOST:SPRITE_HOST,cleanState:cleanState,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
 ctx.btoa = btoa; ctx.atob = atob; ctx.escape = escape; ctx.unescape = unescape; ctx.encodeURIComponent = encodeURIComponent; ctx.decodeURIComponent = decodeURIComponent;
 vm.runInContext(code, ctx);
 const T = ctx.T;
@@ -62,6 +65,22 @@ ok('hostile input is neutralised', () => {
   assert(!/[<>]/.test(out), 'markup survived: ' + out);
   assert.strictEqual(c.g.length, 1); assert.strictEqual(c.g[0].sp, ''); assert.strictEqual(typeof c.g[0].spA, 'number'); assert.strictEqual(c.g[0].f.weather, 'auto'); assert(!('evil"key' in c.g[0].f));
   assert.strictEqual(c.m.sp, 'Incineroar'); assert.strictEqual(c.m.lk.hp, '');
+});
+ok('Showdown import', () => {
+  const S = { hp: 32, at: 32, df: 2, sa: 0, sd: 0, sp: 0 };
+  const txt = T.showdownSet({ name: 'Incineroar', item: 'Sitrus Berry', ability: 'Intimidate', nature: 'Adamant', S, moves: ['Flare Blitz', 'Knock Off'] });
+  const o = T.parseShowdownSet(txt);
+  assert.strictEqual(o.name, 'Incineroar'); assert.strictEqual(o.item, 'Sitrus Berry'); assert.strictEqual(o.ability, 'Intimidate'); assert.strictEqual(o.nature, 'Adamant');
+  assert.strictEqual(JSON.stringify(o.ev), JSON.stringify({ hp: 32, at: 32, df: 2, sa: 0, sd: 0, sp: 0 })); assert.strictEqual(o.moves.length, 2); assert.strictEqual(o.warn.length, 0);
+  /* nickname, gender, Mega naming, locked item */
+  const m = T.parseShowdownSet('Zard (Charizard-Mega-X) (M) @ Charizardite X\nAbility: Tough Claws\nJolly Nature\nEVs: 4 HP / 252 Atk / 252 Spe\n- Flare Blitz');
+  assert.strictEqual(m.name, 'Mega Charizard X'); assert.strictEqual(m.item, ''); assert(m.warn.some(w => /classic EVs/.test(w)), 'classic EVs must be converted');
+  const sum = Object.values(m.ev).reduce((a, b) => a + b, 0); assert(sum <= 66 && Math.max(...Object.values(m.ev)) <= 32);
+  /* unknown and hostile input */
+  const h = T.parseShowdownSet('<img src=x onerror=1> @ <b>x</b>\nAbility: <i>\n- <script>');
+  assert.strictEqual(h.name, ''); assert(h.warn.length >= 1);
+  assert.strictEqual(T.parseShowdownSet('').warn.length, 1);
+  const u = T.parseShowdownSet('Garchomp @ Nonexistent Item\nAbility: Bogus\nSilly Nature\n- Fake Move'); assert.strictEqual(u.name, 'Garchomp'); assert(u.warn.length >= 4);
 });
 ok('HP optimizations list is validated', () => {
   const s = sample(); s.m.ho = ['recovery', 'recovery', 'evil"><b>', 'maxhp', 'minhp', 'lifeorb', 7];
@@ -105,6 +124,11 @@ ok('sprites: every Pokémon has pictures, only from the PokéAPI host', () => {
   assert.strictEqual(T.spriteUrls('Nope', 'big').length, 0); assert.strictEqual(T.spriteImg('Nope', 'big', ''), '');
   /* forms fall back to the base species picture */
   assert(T.spriteUrls('Mega Charizard Y', 'big').some(x => x.endsWith('/other/official-artwork/6.png')));
+});
+ok('button colours keep 4.5:1 contrast for every type pair', () => {
+  const types = Object.keys(T.TYC);
+  types.forEach(a => types.forEach(b => { const c = T.btnColors(T.TYC[a], T.TYC[b]); assert(T.contrastOf(c.a, c.ink) >= 4.5 && T.contrastOf(c.b, c.ink) >= 4.5, `low contrast for ${a}/${b}`); }));
+  types.forEach(a => assert(T.contrastOf(T.TYC[a], T.tyInk(T.TYC[a])) >= 3, 'type chip contrast ' + a));
 });
 ok('type chips and radar chart are well formed', () => {
   assert(!/[<>"]/.test(T.tyInk('#F7D02C') + T.tyInk('#6F35FC')) && T.tyInk('#F7D02C') !== T.tyInk('#6F35FC'));

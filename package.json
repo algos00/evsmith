@@ -3,12 +3,13 @@
   "version": "1.2.0",
   "private": true,
   "license": "MIT",
-  "description": "EVSmith: Stat Point spread optimizer for Pok\u00e9mon Champions (VGC). Ships as the single file dist/EVSmith.html.",
+  "description": "EVSmith: Stat Point spread optimizer for Pokémon Champions (VGC). Ships as the single file dist/EVSmith.html.",
   "scripts": {
     "build": "node build.js",
     "test": "node build.js && npm --prefix tests test",
     "update-meta": "node tools/update-meta.js",
-    "update-sprites": "node tools/build-sprites.js"
+    "update-sprites": "node tools/build-sprites.js",
+    "test:full": "node build.js && npm --prefix tests run test:full"
   },
   "engines": {
     "node": ">=20"

@@ -4,10 +4,13 @@
   "description": "Regression tests for EVSmith.html (damage engine vs @smogon/calc, optimizer vs exhaustive search)",
   "scripts": {
     "test": "node run-all.js",
+    "test:full": "node run-all.js --full",
+    "test:e2e": "node e2e.js",
     "test:engine": "node compare-smogon.js",
     "test:optimizer": "node optimizer-bruteforce.js"
   },
   "devDependencies": {
-    "@smogon/calc": "0.12.0"
+    "@smogon/calc": "0.12.0",
+    "puppeteer-core": "^25.18.1"
   }
 }

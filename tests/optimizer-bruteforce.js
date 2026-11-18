@@ -3,10 +3,13 @@
    For random scenarios (1-4 goals: Survive / KO / Speed, fixed nature or "Auto: every nature") the best result is
    (most weight met, then most goals met, then fewest points). The exhaustive search enumerates every (HP, Def, SpD)
    combination, and every subset of KO and Speed goals, for each nature.
-   Usage: node optimizer-bruteforce.js [seed] [scenarios] [autoNatureScenarios] */
+   Usage: node optimizer-bruteforce.js [seed] [scenarios] [autoNatureScenarios] [shard/shards]
+   With shard k/n only every n-th scenario starting at k is solved (the scenarios themselves are the same), so
+   run-all.js can spread one seed over several processes. */
 const { loadApp, rng } = require('./lib/load');
 const ctx = loadApp(), S = ctx.SOLVE, A = S.A, D = ctx.POKEDEX_CHAMPIONS, MV = ctx.MOVES_CHAMPIONS;
 const seed = +process.argv[2] || 1, NS = +process.argv[3] || 40, NA = process.argv[4] !== undefined ? +process.argv[4] : 4;
+const [SHARD, SHARDS] = (process.argv[5] || '0/1').split('/').map(Number);
 const rnd = rng(seed), pick = rnd.pick;
 const metas = ctx.META.filter(m => D[m.n] && !/^Mega /.test(m.n));
 const DYN = /^(Shell Side Arm|Photon Geyser|Body Press|Foul Play|Gyro Ball|Electro Ball|Low Kick|Grass Knot|Heavy Slam|Heat Crash|Stored Power|Power Trip)$/;
@@ -87,10 +90,12 @@ function bruteNature(M, goals, n) {
 }
 
 (async () => {
-  let ok = 0, bad = 0, infeasible = 0, auto = 0;
+  let ok = 0, bad = 0, infeasible = 0, auto = 0, done = 0;
   const total = NS + NA;
   for (let i = 0; i < total; i++) {
     const isAuto = i >= NS, { M, goals } = scenario(isAuto);
+    if (i % SHARDS !== SHARD) continue;
+    done++;
     const r = await S.solve(M, goals, {}, () => {});
     let best = null;
     for (const n of (isAuto ? S.NATS : [M.nature])) { const b = bruteNature(M, goals, n); if (b && (!best || b.W > best.W || (b.W === best.W && b.C > best.C) || (b.W === best.W && b.C === best.C && b.tot < best.tot))) best = b; }
@@ -102,6 +107,6 @@ function bruteNature(M, goals, n) {
     if (r && !r.goals.every(g => g.ok)) infeasible++;
     if (isAuto) auto++;
   }
-  console.log(`optimizer vs exhaustive search: ${total} scenarios (seed ${seed}; ${auto} with every nature; ${infeasible} where not all goals can be met): ${ok} identical, ${bad} different`);
+  console.log(`optimizer vs exhaustive search: ${done} scenarios (seed ${seed}${SHARDS > 1 ? `, part ${SHARD + 1}/${SHARDS}` : ''}; ${auto} with every nature; ${infeasible} where not all goals can be met): ${ok} identical, ${bad} different`);
   process.exit(bad ? 1 : 0);
 })();

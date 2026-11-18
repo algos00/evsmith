@@ -3,7 +3,9 @@
 Regression tests for `../EVSmith.html`. Nothing here ships with the app.
 
     npm install
-    npm test                       # everything (about a minute)
+    npm test                       # quick set, all files in parallel (about 5 s)
+    npm run test:full              # everything, end-to-end in Chrome included (about 1 min on 12 cores)
+    npm run test:e2e               # only the end-to-end checks
     npm run test:engine            # damage engine vs @smogon/calc (pinned to 0.12.0)
     npm run test:optimizer         # optimizer vs exhaustive search
     EVSMITH_HTML=/path/to/other.html npm test
@@ -18,5 +20,10 @@ Regression tests for `../EVSmith.html`. Nothing here ships with the app.
 * `situational.js` compares the abilities that need a situation (Blaze-type at 1/3 HP, Flash Fire, Stakeout, Electromorphosis, Supreme Overlord, Merciless) with `@smogon/calc`.
 * `features.js` checks the Resistance mode by exhaustive search of the split, the "why these points" pins, Foul Play and Sand Spit.
 * `app-logic.js` tests the pure functions of the interface: saved state, share link and Showdown export.
+* `contrast.js` checks the WCAG contrast of the colour tokens, light and dark.
+* `i18n.js` checks that every interface text has an Italian translation with the same placeholders and HTML tags, and that no translation is unused.
+* `e2e.js` drives the built page in a real Chrome (puppeteer-core; `CHROME_PATH` or a normal install) on a local server with no network: keyboard use, full calculation, import, share link, layout at 7 widths, accessibility names, Italian interface, offline mode.
 
-If a test fails, rerun it with the same seed to reproduce the exact case.
+The quick set uses fewer random cases and one seed, and leaves out the “every nature” optimizer scenarios (the slowest, about 30 s each) and the end-to-end checks. `run-all.js` splits the optimizer search over several processes (`optimizer-bruteforce.js seed scenarios autoScenarios k/n`).
+
+If a test fails, `run-all.js` prints the exact command: rerun that file alone with the same arguments to reproduce the case.

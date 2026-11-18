@@ -81,7 +81,7 @@ while (scenarios.length < NSC) {
     assert.strictEqual(t.best.add, sel.includes('maxhp') && !sel.includes('minhp') ? Math.max(...cands) : Math.min(...cands), 'tie-break (Max HP / Min HP)');
     hpChecks++;
   }
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < Math.min(12, scenarios.length); i++) {
     const sc = scenarios[i], M = Object.assign({}, sc.M, { fm: 'none', hpOpt: ['sitrus', 'lifeorb'] }), r = await S.solve(M, sc.goals, {}, () => {});
     if (!r) continue;
     assert(r.S1.hp >= r.S.hp && r.S1.hp - r.S.hp <= r.free, 'HP tuning may only use leftover points');
@@ -99,6 +99,19 @@ while (scenarios.length < NSC) {
   const fpOk = S.gp(M, rr.S, rr.nat, { atts: [attOf(fp)] }) >= 1 - 1e-9;
   assert(rr.goals.find(g => /Foul Play/.test(g.label)).ok === fpOk, 'reported result must match a direct check');
   console.log(`Foul Play: result consistent with a direct check (goal met: ${fpOk}, Atk ${rr.S.at})`);
+
+  /* 3b. "Check my spread": same verdicts as the optimizer's own final check, and no optimization */
+  let chk = 0;
+  for (let i = 0; i < Math.min(15, scenarios.length); i++) {
+    const sc = scenarios[i], M = Object.assign({}, sc.M, { fm: 'none' }), r = await S.solve(M, sc.goals, {}, () => {}); if (!r) continue;
+    const c = S.checkSpread(M, sc.goals, r.S, r.nat);
+    assert(c.check === true && c.goals.length === r.goals.length, 'check result shape');
+    c.goals.forEach((g, k) => { assert.strictEqual(g.ok, r.goals[k].ok, 'verdict differs for ' + g.label); assert.strictEqual(g.label, r.goals[k].label); assert(Math.abs(g.p - r.goals[k].p) < 1e-12); });
+    const empty = S.checkSpread(M, sc.goals, { hp: 0, at: 0, df: 0, sa: 0, sd: 0, sp: 0 }, r.nat);
+    assert.strictEqual(empty.free, 66);
+    chk++;
+  }
+  console.log(`Check my spread: ${chk} scenarios, verdicts identical to the optimizer's final check`);
 
   /* 4. Sand Spit / Seed Sower do not set weather or terrain in "auto" */
   A.mkField({ weather: 'auto', terrain: 'auto' });

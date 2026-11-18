@@ -26,11 +26,13 @@ jobs:
             exit 1
           fi
       - run: npm ci --prefix tests
-      - run: npm test
+      - run: npm run test:full
       - name: Prepare files
         run: |
           mkdir -p site
           cp dist/EVSmith.html site/index.html
+          # installable app: service worker, manifest and icons sit next to the page (not needed by the downloadable file)
+          cp -r dist/sw.js dist/manifest.webmanifest dist/icons site/
           cp dist/EVSmith.html "EVSmith-${GITHUB_REF_NAME}.html"
       - uses: actions/upload-artifact@v4
         with:
