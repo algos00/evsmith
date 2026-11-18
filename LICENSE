@@ -24,4 +24,4 @@ This license covers EVSmith's own code (src/engine.js, src/ui.js, src/template.h
 src/style.css, build.js, tools/ and tests/). src/data.js is generated from Pokémon
 Showdown's data, which is under its own MIT license (Copyright (c) 2011-2026
 Guangcong Luo and other contributors); that notice is reproduced inside the built
-EVSmith.html. Pokémon and Pokémon character names are trademarks of their owners.
+EVSmith.html. Pokémon and Pokémon character names are trademarks of their owners. Pokémon sprites and artwork shown by the page are loaded at runtime from the PokéAPI sprites repository, are not part of this project and are not covered by this license.

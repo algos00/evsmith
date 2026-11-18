@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EVSmith</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,50 50,6 88.1,28' fill='%233fae5c'/%3E%3Cpolygon points='50,50 88.1,28 88.1,72' fill='%23e0523f'/%3E%3Cpolygon points='50,50 88.1,72 50,94' fill='%233b82e0'/%3E%3Cpolygon points='50,50 50,94 11.9,72' fill='%239163e0'/%3E%3Cpolygon points='50,50 11.9,72 11.9,28' fill='%23d9609a'/%3E%3Cpolygon points='50,50 11.9,28 50,6' fill='%23d9a400'/%3E%3C/svg%3E">
 <style>@@src/style.css@@</style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://raw.githubusercontent.com"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <main>
-<div class="hero"><svg viewBox="0 0 100 100" role="img" aria-label="EVSmith"><title>EVSmith</title><polygon points="50,50 50,6 88.1,28" style="fill:var(--s0);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,28 88.1,72" style="fill:var(--s1);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,72 50,94" style="fill:var(--s2);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 50,94 11.9,72" style="fill:var(--s3);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,72 11.9,28" style="fill:var(--s4);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,28 50,6" style="fill:var(--s5);stroke:var(--bg);stroke-width:2.5"/></svg><h1>EVSmith</h1></div>
-<p class="tag">Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it with the fewest points.</p>
+<header class="top"><div class="top-in"><div class="hero"><svg viewBox="0 0 100 100" role="img" aria-label="EVSmith"><title>EVSmith</title><polygon points="50,50 50,6 88.1,28" style="fill:var(--s0);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,28 88.1,72" style="fill:var(--s1);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,72 50,94" style="fill:var(--s2);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 50,94 11.9,72" style="fill:var(--s3);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,72 11.9,28" style="fill:var(--s4);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,28 50,6" style="fill:var(--s5);stroke:var(--bg);stroke-width:2.5"/></svg><h1>EVSmith</h1></div>
+<p class="tag">Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it with the fewest points.</p></div><div class="hero-art" id="heroArt" aria-hidden="true"></div></header>
 
 <div class="layout">
 <div class="col-in">
@@ -64,6 +65,7 @@ Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind,
 <div class="card">
 <h2><span class="n">1</span>Your Pokémon</h2>
 <input class="ac" data-ac="mon" autocomplete="off" autocapitalize="off" spellcheck="false" id="mSp" placeholder="Pokémon (e.g. Incineroar)">
+<div id="showcase"></div>
 <div class="g2"><div><label>Ability</label><select id="mAb"></select></div><div><label>Item</label><select id="mIt"></select></div></div>
 <div class="g2"><div><label>Nature</label><select id="mNa"></select></div><div><label>Status</label><select id="mSt"></select></div></div>
 <div id="mSit"></div>
@@ -110,8 +112,9 @@ Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind,
 </div>
 
 <footer class="disc">
-<p><b>Unofficial fan project.</b> EVSmith is not affiliated with, sponsored by or endorsed by Nintendo, Game Freak, Creatures Inc. or The Pokémon Company. Pokémon and all related names are trademarks of their respective owners and are used here only to identify the games’ characters and mechanics. EVSmith is free, has no commercial purpose, and contains no game files, images or sounds.</p>
+<p><b>Unofficial fan project.</b> EVSmith is not affiliated with, sponsored by or endorsed by Nintendo, Game Freak, Creatures Inc. or The Pokémon Company. Pokémon and all related names are trademarks of their respective owners and are used here only to identify the games’ characters and mechanics. EVSmith is free and has no commercial purpose.</p>
 <ul>
+<li><b>Pictures</b>: Pokémon sprites and artwork are not part of EVSmith and are not stored in its repository. The page loads them while you use it from the <a href="https://github.com/PokeAPI/sprites" rel="noopener noreferrer">PokéAPI sprites repository</a> (hosted by GitHub). They are © Nintendo, Game Freak and The Pokémon Company, are not covered by this project’s license, and are used only to show which Pokémon you are talking about. Loading them lets GitHub see your IP address, like the Google Fonts do; the page never sends them any other data, and still works if they cannot be loaded.</li>
 <li><b>Game data</b> (Pokémon, moves, abilities, items, learnsets) is generated from the public data of Pokémon Showdown, MIT license (notice below).</li>
 <li><b>Damage engine, optimizer and interface</b> were written for EVSmith for Pokémon Champions (level 50, doubles). The engine was compared with the independent calculator @smogon/calc on 40,000 random cases covering abilities, items, status, boosts, weather, terrain, screens and Helping Hand; the differences left come from Champions-specific move data (for example claw moves counting as slicing) and from one-point rounding differences when several stat modifiers stack. The abilities that need a situation were compared with it on a further 12,000 cases. The optimizer was checked against an exhaustive search on 132 random scenarios, including scenarios where not every goal can be met, scenarios that try every nature and scenarios with Foul Play.</li>
 <li><b>Tournament usage, abilities, items, moves and natures</b>: <span id="metaTxt">MunchStats (online Limitless tournaments, Regulation M-C). Collected on 14 November 2026 and not updated automatically; where no reliable data exists, the field is left empty.</span></li>
@@ -144,6 +147,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 <script>@@src/shim.js@@</script>
 <script>@@src/data.js@@</script>
 <script>@@src/tdata.js@@</script>
+<script>@@src/sprites.js@@</script>
 <script>@@src/engine.js@@</script>
 <script>@@src/ui.js@@</script>
 </body>

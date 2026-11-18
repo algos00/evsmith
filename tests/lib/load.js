@@ -21,7 +21,7 @@ function loadApp(htmlPath) {
     if (!s) throw new Error('script block not found: ' + marker);
     return s;
   };
-  const data = find('POKEDEX_CHAMPIONS='), tdata = find('var TDATA='), engine = find('EVSmith damage engine'), ui = find('var A=ENG;');
+  const sprites = find('var SPRITES='), data = find('POKEDEX_CHAMPIONS='), tdata = find('var TDATA='), engine = find('EVSmith damage engine'), ui = find('var A=ENG;');
   const a = ui.indexOf('var A=ENG;'), b = ui.indexOf('/* ---------- UI ---------- */');
   let core = ui.slice(a, b);
   const extra = ['newField', 'flatField', 'oppCfg', 'newGoal'].map(n => braceBlock(ui, ui.indexOf('function ' + n + '('))).join('\n');
@@ -32,6 +32,7 @@ globalThis.SOLVE={solve:solve,mkMe:mkMe,sv:sv,gp:gp,ko:ko,koNeed:koNeed,spdOk:sp
   vm.createContext(ctx);
   vm.runInContext(data, ctx);
   vm.runInContext(tdata, ctx);
+  vm.runInContext(sprites, ctx);
   vm.runInContext(engine, ctx);
   vm.runInContext("(function(){'use strict';\n" + core + '\n' + extra + '\n' + tail + '\n})();', ctx);
   return ctx;

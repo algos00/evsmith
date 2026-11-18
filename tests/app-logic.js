@@ -16,6 +16,8 @@ function fn(name) {
   const i = ui.indexOf('function ' + name + '('); let d = 0, j = ui.indexOf('{', i);
   for (let k = j; ; k++) { if (ui[k] === '{') d++; else if (ui[k] === '}' && --d === 0) return ui.slice(i, k + 1); }
 }
+const dispStart = ui.indexOf('/* ---------- display helpers (pure'), dispEnd = ui.indexOf('/* ---------- end display helpers ---------- */');
+assert(dispStart > 0 && dispEnd > dispStart, 'display helper markers not found');
 const pureStart = ui.indexOf('/* ---------- share & export (pure'), pureEnd = ui.indexOf('/* ---------- end share & export ---------- */');
 assert(pureStart > 0 && pureEnd > pureStart, 'pure block markers not found');
 const code = `
@@ -27,8 +29,9 @@ ${stmt('var SIT=')}
 ${stmt('var HPOPT=')}
 var THR=[];for(var q=16;q>=1;q--)THR.push([String(q/16),q===16?'100% (always)':(q*6.25)+'%']);
 ${fn('newGoal')}
+${ui.slice(dispStart, dispEnd)}
 ${ui.slice(pureStart, pureEnd)}
-globalThis.T={cleanState:cleanState,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
+globalThis.T={spriteUrls:spriteUrls,typeChips:typeChips,spriteImg:spriteImg,radar:radar,TYC:TYC,tyInk:tyInk,SPRITE_HOST:SPRITE_HOST,cleanState:cleanState,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
 ctx.btoa = btoa; ctx.atob = atob; ctx.escape = escape; ctx.unescape = unescape; ctx.encodeURIComponent = encodeURIComponent; ctx.decodeURIComponent = decodeURIComponent;
 vm.runInContext(code, ctx);
 const T = ctx.T;
@@ -91,5 +94,24 @@ ok('Stat Points equal Showdown Champions EVs', () => {
     assert.strictEqual(A.statOf(b, sp, 'Adamant', 'at'), Math.trunc((core + 5) * 110 / 100), `+nature b=${b} sp=${sp}`);
     if (b > 1) assert.strictEqual(A.hpOf(b, sp), core + 60, `hp b=${b} sp=${sp}`);
   } });
+});
+ok('sprites: every Pokémon has pictures, only from the PokéAPI host', () => {
+  const D = ctx.POKEDEX_CHAMPIONS;
+  Object.keys(D).forEach(n => {
+    ['big', 'small'].forEach(k => { const u = T.spriteUrls(n, k); assert(u.length >= 2, 'no sprite urls for ' + n); u.forEach(x => assert(x.startsWith(T.SPRITE_HOST) && /^[A-Za-z0-9\/:._-]+\.png$/.test(x), 'unexpected url ' + x)); });
+    assert(T.spriteImg(n, 'big', 'x').includes('referrerpolicy="no-referrer"'));
+    [D[n].t1, D[n].t2].filter(Boolean).forEach(t => assert(T.TYC[t], 'no colour for type ' + t));
+  });
+  assert.strictEqual(T.spriteUrls('Nope', 'big').length, 0); assert.strictEqual(T.spriteImg('Nope', 'big', ''), '');
+  /* forms fall back to the base species picture */
+  assert(T.spriteUrls('Mega Charizard Y', 'big').some(x => x.endsWith('/other/official-artwork/6.png')));
+});
+ok('type chips and radar chart are well formed', () => {
+  assert(!/[<>"]/.test(T.tyInk('#F7D02C') + T.tyInk('#6F35FC')) && T.tyInk('#F7D02C') !== T.tyInk('#6F35FC'));
+  assert.strictEqual((T.typeChips('Incineroar').match(/class="ty"/g) || []).length, 2);
+  assert.strictEqual(T.typeChips('"><b>'), '');
+  const S = { hp: 0, at: 32, df: 5, sa: 0, sd: 12, sp: 17 }, svg = T.radar(S, { hp: 0, at: 32, df: 5, sa: 0, sd: 12, sp: 32 }, { hp: 'HP', at: 'Atk', df: 'Def', sa: 'SpA', sd: 'SpD', sp: 'Spe' });
+  assert(svg.startsWith('<svg') && svg.endsWith('</svg>') && !/NaN|undefined/.test(svg), 'radar must not contain NaN/undefined');
+  assert.strictEqual((svg.match(/<circle/g) || []).length, 6); assert(svg.includes('17→32'));
 });
 console.log(`app logic: ${n} checks passed`);

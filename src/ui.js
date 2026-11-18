@@ -204,7 +204,7 @@ function acShow(inp){acIn=inp;var q=inp.value.trim().toLowerCase(),items=[];
  items.sort(function(a,b){return (a.no?1:0)-(b.no?1:0)||((a.n.toLowerCase().indexOf(q)===0?0:1)-(b.n.toLowerCase().indexOf(q)===0?0:1))||a.n.localeCompare(b.n)});
  items=items.slice(0,8);
  if(!q||!items.length||(items.length===1&&items[0].n.toLowerCase()===q)){acBox.hidden=true;return;}
- acBox.innerHTML=items.map(function(x){return '<div class="aci" data-v="'+esc(x.n)+'">'+esc(x.n)+(x.note?' <span class="mu">· '+x.note+'</span>':'')+(x.no?' <span class="mu">(can’t learn it)</span>':'')+'</div>'}).join('');
+ var isMon=inp.dataset.ac==='mon';acBox.innerHTML=items.map(function(x){return '<div class="aci" data-v="'+esc(x.n)+'">'+(isMon?'<span class="av xs" data-ini="'+esc(x.n[0])+'">'+spriteImg(x.n,'small','')+'</span>':'')+'<span class="aci-t">'+esc(x.n)+(x.note?' <span class="mu">· '+x.note+'</span>':'')+(x.no?' <span class="mu">(can’t learn it)</span>':'')+'</span>'+(isMon?'<span class="tys">'+typeChips(x.n)+'</span>':'')+'</div>'}).join('');
  var r=inp.getBoundingClientRect();acBox.style.left=(r.left+window.pageXOffset)+'px';acBox.style.top=(r.bottom+window.pageYOffset+2)+'px';acBox.style.width=r.width+'px';acBox.hidden=false;}
 document.addEventListener('input',function(e){if(e.target.classList&&e.target.classList.contains('ac'))acShow(e.target);});
 document.addEventListener('focusout',function(e){if(e.target===acIn)setTimeout(function(){acBox.hidden=true;},200);});
@@ -240,9 +240,11 @@ function fieldBlock(g,i){var f=g.f||(g.f=newField());
  var dd=function(k,arr){return '<select data-i="'+i+'" data-k="f.'+k+'">'+arr.map(function(x){return '<option value="'+x[0]+'"'+(String(x[0])===String(f[k])?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select>';};
  var ck=function(sd){return CK.map(function(c){return '<label class="ck"><input type="checkbox" data-i="'+i+'" data-k="f.'+c[0]+sd+'"'+(f[c[0]+sd]?' checked':'')+'> '+c[1]+'</label>'}).join('');};
  return '<details class="fld" data-i="'+i+'"'+(g.fOpen?' open':'')+'><summary>Field &amp; weather'+esc(fieldSummary(f))+'</summary><div class="g2"><div><label>Weather</label>'+dd('weather',WE)+'</div><div><label>Terrain</label>'+dd('terrain',TE)+'</div></div><div class="g2"><div><label><b>Your side</b></label>'+ck('L')+'</div><div><label><b>Opponent’s side</b></label>'+ck('R')+'</div></div></details>';}
+function oppHead(g,i){var d=DEX[g.sp],c1=d?TYC[d.t1]:'#8aa',c2=d?TYC[d.t2||d.t1]:'#8aa';
+ return '<div class="opp" style="--c1:'+c1+';--c2:'+c2+'"><span class="av lg" data-ini="'+esc((g.sp||'?')[0])+'">'+(d?spriteImg(g.sp,'big',''):'')+'</span><div class="opp-in"><input class="ac" data-ac="mon" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="sp" value="'+esc(g.sp)+'" placeholder="Opponent Pokémon"><div class="tys">'+typeChips(g.sp)+'</div></div></div>';}
 function card(g,i){var T={surv:'🛡️ Survive',ko:'⚔️ Get a KO on',spd:'💨 Speed vs'}[g.t];
  var h='<div class="gc t-'+g.t+'"><div class="gh"><b>'+T+'</b><button class="x" data-del="'+i+'">✕</button></div>';
- h+='<input class="ac" data-ac="mon" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="sp" value="'+esc(g.sp)+'" placeholder="Opponent Pokémon">'+metaBtn(g,i);
+ h+=oppHead(g,i)+metaBtn(g,i);
  h+='<div class="g2"><div><label>Ability</label><select data-i="'+i+'" data-k="ab">'+abOpts(g.sp,g.ab,true)+'</select></div><div><label>Item</label><select data-i="'+i+'" data-k="it"'+(itemLocked(g.sp)?' disabled':'')+'>'+opts(ITL,g.it,'(no item)')+'</select></div></div>';
  if(g.t==='surv')h+=sitBlock(g.ab,g.abOn,g.fainted,{on:'data-i="'+i+'" data-k="abOn"',fa:'data-i="'+i+'" data-k="fainted"'});
  h+='<div class="g2"><div><label>Nature</label><select data-i="'+i+'" data-k="na">'+NAT.map(function(n){return '<option value="'+n+'"'+(n===g.na?' selected':'')+'>'+natLab(n)+'</option>'}).join('')+'</select></div><div><label>Status</label><select data-i="'+i+'" data-k="st">'+opts(STA,g.st)+'</select></div></div>';
@@ -276,9 +278,31 @@ function metaGoals(){var atk=$i('tmOn').checked,spd=$i('tmSpd').checked;if(!atk&
 /* tabella di tutti i Pokémon */
 function amRender(){var q=$i('amQ').value.trim().toLowerCase(),T=$i('amT'),pc=function(m,k,n){return m.pc&&m.pc[k]&&m.pc[k][n]!==undefined?' '+m.pc[k][n]+'%':'';};
  var rows=SPECIES.filter(function(n){return !q||n.toLowerCase().indexOf(q)>=0}).map(function(n){var t=TDATA[n],m=META_BY[n];
-  return '<tr><td>'+esc(n)+'</td><td>'+(t?t.u+'% <span class="mu">#'+t.r+'</span>':'')+'</td><td>'+(m?m.ab.slice(0,2).map(function(a){return esc(a)+pc(m,'ab',a)}).join(', '):'')+'</td><td>'+(m?m.it.slice(0,3).map(function(a){return esc(a)+pc(m,'it',a)}).join(', '):'')+'</td><td>'+(m?m.mv.slice(0,4).map(function(a){return esc(a)+pc(m,'mv',a)}).join(', '):'')+'</td><td>'+(m&&m.na?m.na.slice(0,2).map(function(a){return esc(a[0])+' '+a[1]+'%'}).join(', '):'')+'</td></tr>';}).join('');
+  return '<tr><td class="nm"><span class="av xs" data-ini="'+esc(n[0])+'">'+spriteImg(n,'small','')+'</span>'+esc(n)+'</td><td>'+(t?t.u+'% <span class="mu">#'+t.r+'</span>':'')+'</td><td>'+(m?m.ab.slice(0,2).map(function(a){return esc(a)+pc(m,'ab',a)}).join(', '):'')+'</td><td>'+(m?m.it.slice(0,3).map(function(a){return esc(a)+pc(m,'it',a)}).join(', '):'')+'</td><td>'+(m?m.mv.slice(0,4).map(function(a){return esc(a)+pc(m,'mv',a)}).join(', '):'')+'</td><td>'+(m&&m.na?m.na.slice(0,2).map(function(a){return esc(a[0])+' '+a[1]+'%'}).join(', '):'')+'</td></tr>';}).join('');
  T.innerHTML='<tr><th>Pokémon</th><th>Usage</th><th>Ability</th><th>Items</th><th>Moves</th><th>Nature</th></tr>'+rows;}
 $i('allMon').addEventListener('toggle',amRender);$i('amQ').addEventListener('input',amRender);
+/* ---------- display helpers (pure functions: no DOM access) ---------- */
+var TYC={Normal:'#A8A77A',Fire:'#EE8130',Water:'#6390F0',Electric:'#F7D02C',Grass:'#7AC74C',Ice:'#96D9D6',Fighting:'#C22E28',Poison:'#A33EA1',Ground:'#E2BF65',Flying:'#A98FF3',Psychic:'#F95587',Bug:'#A6B91A',Rock:'#B6A136',Ghost:'#735797',Dragon:'#6F35FC',Dark:'#705746',Steel:'#B7B7CE',Fairy:'#D685AD'};
+function tyInk(hex){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (0.299*r+0.587*g+0.114*b)>150?'#14231f':'#ffffff';}
+function typeChips(sp){var d=DEX[sp];if(!d)return '';return [d.t1,d.t2].filter(Boolean).map(function(t){return '<span class="ty" style="--c:'+TYC[t]+';--ct:'+tyInk(TYC[t])+'">'+t+'</span>';}).join('');}
+/* Sprites are never stored in this project: they are loaded at runtime from the PokéAPI sprites repository.
+   spriteUrls returns the addresses to try in order (the page moves to the next one when an image is missing). */
+var SPRITE_HOST='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
+function spriteUrls(sp,kind){var id=SPRITES[sp],b=SPRITE_BASE[sp];if(!id)return [];
+ var art=function(i){return SPRITE_HOST+'other/official-artwork/'+i+'.png'},home=function(i){return SPRITE_HOST+'other/home/'+i+'.png'},fr=function(i){return SPRITE_HOST+i+'.png'};
+ var l=kind==='big'?[art(id),home(id),fr(id)]:[fr(id),art(id)];if(b)l=l.concat(kind==='big'?[art(b),fr(b)]:[fr(b)]);return l;}
+function spriteImg(sp,kind,cls){var u=spriteUrls(sp,kind);if(!u.length)return '';return '<img class="spr '+(cls||'')+'" src="'+u[0]+'" data-fb="'+u.slice(1).join('|')+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" draggable="false">';}
+/* hexagon chart of a spread (same orientation and colours as the logo); S2 = optional second spread drawn dashed */
+function radar(S,S2,labels){var K=['hp','at','df','sa','sd','sp'],C=130,R=84,pt=function(i,f){var a=(-90+i*60)*Math.PI/180;return [(C+R*f*Math.cos(a)).toFixed(1),(C+R*f*Math.sin(a)).toFixed(1)];},poly=function(f){return K.map(function(k,i){return pt(i,f(k)).join(',')}).join(' ');};
+ var h='<svg class="radar" viewBox="0 0 260 260" role="img" aria-label="Spread chart"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--s0)"/><stop offset=".5" stop-color="var(--s2)"/><stop offset="1" stop-color="var(--s4)"/></linearGradient></defs>';
+ [.25,.5,.75,1].forEach(function(f){h+='<polygon class="rg-ring" points="'+poly(function(){return f})+'"/>';});
+ K.forEach(function(k,i){var p=pt(i,1);h+='<line class="rg-ax" x1="'+C+'" y1="'+C+'" x2="'+p[0]+'" y2="'+p[1]+'"/>';});
+ h+='<g class="rg-draw"><polygon class="rg-fill" points="'+poly(function(k){return Math.max(.03,S[k]/32)})+'"/>';
+ if(S2)h+='<polygon class="rg-fill2" points="'+poly(function(k){return Math.max(.03,S2[k]/32)})+'"/>';
+ K.forEach(function(k,i){var p=pt(i,Math.max(.03,S[k]/32));h+='<circle class="rg-dot" cx="'+p[0]+'" cy="'+p[1]+'" r="5.5" style="fill:var(--s'+i+')"/>';});h+='</g>';
+ K.forEach(function(k,i){var p=pt(i,1.3),a=Math.abs(p[0]-C)<4?'middle':(p[0]>C?'start':'end');h+='<text class="rg-lab" x="'+(a==='start'?+p[0]-12:a==='end'?+p[0]+12:p[0])+'" y="'+(+p[1]-2)+'" text-anchor="'+a+'" style="fill:var(--s'+i+')">'+labels[k]+'</text><text class="rg-val" x="'+(a==='start'?+p[0]-12:a==='end'?+p[0]+12:p[0])+'" y="'+(+p[1]+14)+'" text-anchor="'+a+'">'+S[k]+(S2&&S2[k]!==S[k]?'→'+S2[k]:'')+'</text>';});
+ return h+'</svg>';}
+/* ---------- end display helpers ---------- */
 /* ---------- share & export (pure functions: no DOM access) ---------- */
 function b64enc(t){return btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function b64dec(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return decodeURIComponent(escape(atob(t)));}
@@ -357,13 +381,14 @@ function setText(r,M,which){return showdownSet({name:M.name,item:M.item||LOCK_IT
 function exportHtml(r,M){LAST={r:r,M:M};var K=['hp','at','df','sa','sd','sp'],differs=K.some(function(k){return r.S[k]!==r.S1[k]});
  return '<h2>Export</h2><p class="mu">Paste it in Pokémon Showdown (Teambuilder → Import). Stat Points go in the EVs line, as in Showdown’s Champions format. Moves come from your KO goals.</p><div class="g2"><button class="add" data-exp="min" type="button">Copy set (minimum spread)</button>'+(differs?'<button class="add" data-exp="full" type="button">Copy set (with suggested leftover)</button>':'')+'</div><details><summary>Show the text</summary><pre style="white-space:pre-wrap;user-select:all">'+esc(setText(r,M,'min'))+'</pre></details>';}
 $i('res').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-exp]');if(!b||!LAST)return;copyText(setText(LAST.r,LAST.M,b.dataset.exp),'Set copied.');});
+function resTop(r,M){var K=['hp','at','df','sa','sd','sp'],d=DEX[M.name]||{},c1=TYC[d.t1]||'#8aa',c2=TYC[d.t2||d.t1]||'#8aa',diff=r.free>0&&K.some(function(k){return r.S[k]!==r.S1[k]});
+ return '<div class="res-top" style="--c1:'+c1+';--c2:'+c2+'"><div class="portrait"><span class="av big" data-ini="'+esc(M.name[0])+'">'+spriteImg(M.name,'big','')+'</span><div class="pn">'+esc(M.name)+'</div><div class="tys">'+typeChips(M.name)+'</div><div class="nat">'+natLab(r.nat)+'</div></div>'+radar(r.S,diff?r.S1:null,NM)+'</div>';}
 function whyHtml(r,M){var K=['hp','at','df','sa','sd','sp'],rows=K.filter(function(k){return r.base[k]>0}).map(function(k){var p=r.pins[k]||[],mine=p.filter(function(x){return !x.meta}),meta=p.filter(function(x){return x.meta}),t;
   if(M.lock[k]!=null)t='fixed by you';else{var parts=[];if(mine.length)parts.push(mine.map(function(x){return esc(x.label)}).join('; '));if(meta.length)parts.push(meta.length+' tournament-meta goal'+(meta.length>1?'s':'')+(mine.length?'':': '+meta.slice(0,3).map(function(x){return esc(x.label)}).join('; ')+(meta.length>3?'…':'')));
    t=parts.length?parts.join(' · '):'no single goal needs the last point on its own: it is a trade-off between HP, Def and SpD';}
   return '<li><b>'+NM[k]+' '+r.base[k]+'</b> — '+t+'</li>';});
  return rows.length?'<details class="why"><summary>Why these points?</summary><ul style="margin:6px 0 0 18px;padding:0">'+rows.join('')+'</ul></details>':'';}
-function show(r,M,ms){var K=['hp','at','df','sa','sd','sp'],mineG=r.goals.filter(function(g){return !g.meta}),metaG=r.goals.filter(function(g){return g.meta}),badAll=mineG.filter(function(g){return !g.ok}),h='<h2>'+(badAll.length?'Best spread found':'Minimum spread found')+'</h2>'+ruler(r.S,K)+'<div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S[k]+'</b><span>'+NM[k]+'</span></div>'}).join('')+'</div>';
- h+='<p><b>Nature: '+natLab(r.nat)+'</b></p><p class="mu">Stats at level 50: '+K.map(function(k){return NM[k]+' '+r.stats[k]}).join(' · ')+'</p>';
+function show(r,M,ms){var K=['hp','at','df','sa','sd','sp'],mineG=r.goals.filter(function(g){return !g.meta}),metaG=r.goals.filter(function(g){return g.meta}),badAll=mineG.filter(function(g){return !g.ok}),h='<h2>'+(badAll.length?'Best spread found':'Minimum spread found')+'</h2>'+resTop(r,M)+ruler(r.S,K)+'<div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S[k]+'</b><span>'+NM[k]+'</span><i>'+r.stats[k]+'</i></div>'}).join('')+'</div>';
  h+=whyHtml(r,M);
  if(r.free>0){h+='<p><b>Free points left: '+r.free+'</b> <span class="mu">(you are not forced to use them)</span></p><p class="mu">Suggested way to spend them ('+(r.left===undefined?r.free:r.left)+' stay free):</p><div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S1[k]+'</b><span>'+NM[k]+'</span></div>'}).join('')+'</div>'+(r.why&&r.why.length?'<ul class="mu" style="margin:6px 0 0 18px;padding:0">'+r.why.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'');}
  if(r.effort&&r.effort.length)h+='<p class="mu">Extra points put toward goals that could not be fully reached: '+r.effort.map(function(e){return NM[e.k]+' +'+e.n+' ('+e.label+')'}).join(', ')+'.</p>';
@@ -386,13 +411,23 @@ $i('hpOptList').innerHTML=HPOPT.map(function(r){return '<label class="ck"><input
 function hpOptSel(){return [].slice.call(document.querySelectorAll('[data-hpopt]')).filter(function(x){return x.checked}).map(function(x){return x.dataset.hpopt});}
 function hpOptSum(){var n=hpOptSel().length;$i('hpOptSum').textContent=n?'· '+n+' on':'';}
 $i('hpOptList').addEventListener('change',function(e){var k=e.target.dataset.hpopt,o=k==='maxhp'?'minhp':k==='minhp'?'maxhp':'';if(o&&e.target.checked)document.querySelector('[data-hpopt="'+o+'"]').checked=false;hpOptSum();});
+/* ---------- pictures: showcase of your Pokémon, hero art, image fallbacks ---------- */
+document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||t.dataset.fb===undefined)return;var l=t.dataset.fb?t.dataset.fb.split('|'):[];if(l.length){t.dataset.fb=l.slice(1).join('|');t.src=l[0];}else t.classList.add('nospr');},true);
+document.addEventListener('load',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&t.classList.contains('spr'))t.classList.add('ok');},true);
+function drawShowcase(){var sp=$i('mSp').value.trim(),d=DEX[sp],el=$i('showcase');
+ if(!d){el.innerHTML='';el.className='';return;}
+ var c1=TYC[d.t1],c2=TYC[d.t2||d.t1],t=TDATA[sp],K=['hp','at','df','sa','sd','sp'],root=document.documentElement.style;
+ root.setProperty('--ty1',c1);root.setProperty('--ty2',c2);el.className='showcase';el.style.cssText='--c1:'+c1+';--c2:'+c2;
+ el.innerHTML='<div class="sc-art"><span class="av hero" data-ini="'+esc(sp[0])+'">'+spriteImg(sp,'big','')+'</span></div><div class="sc-info"><div class="sc-name">'+esc(sp)+'</div><div class="tys">'+typeChips(sp)+(t?'<span class="use">#'+t.r+' · '+t.u+'% of teams</span>':'')+'</div><div class="bars">'+K.map(function(k,i){return '<div class="bar s'+i+'"><span>'+NM[k]+'</span><i style="--w:'+Math.min(100,d.bs[k]/180*100).toFixed(1)+'%"></i><b>'+d.bs[k]+'</b></div>'}).join('')+'</div></div>';}
+$i('heroArt').innerHTML=TOP.slice(0,5).map(function(t,i){return '<span class="ha ha'+i+'" title="'+esc(t.n)+'">'+spriteImg(t.n,'big','')+'</span>'}).join('');
+$i('mSp').addEventListener('change',drawShowcase);drawShowcase();
 /* ---------- saved state, share link, export (DOM side) ---------- */
 var LS_KEY='evsmith.state.v1',toolT=null;
 function readState(){var lk={};['hp','at','df','sa','sd','sp'].forEach(function(k){lk[k]=$i('lk_'+k).value;});
  return{v:1,m:{sp:$i('mSp').value.trim(),ab:$i('mAb').value,it:$i('mIt').value,na:$i('mNa').value,st:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,ho:hpOptSel(),lk:lk},
   t:{on:$i('tmOn').checked,spd:$i('tmSpd').checked,n:$i('tmN').value,m:$i('tmM').value,nat:$i('tmNat').value,we:$i('tmWe').value,te:$i('tmTe').value,b:$i('tmB').value},
   g:goals.map(function(g){var o={};Object.keys(g).forEach(function(k){if(k!=='fOpen'&&k!=='note')o[k]=g[k]});return o;})};}
-function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;$i('mAb').innerHTML=abOpts(m.sp,m.ab);$i('mIt').disabled=itemLocked(m.sp);$i('mIt').value=m.it;mySit.on=m.abOn;mySit.fa=m.fainted;drawMySit();document.querySelectorAll('[data-hpopt]').forEach(function(x){x.checked=m.ho.indexOf(x.dataset.hpopt)>=0});hpOptSum();
+function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;drawShowcase();$i('mAb').innerHTML=abOpts(m.sp,m.ab);$i('mIt').disabled=itemLocked(m.sp);$i('mIt').value=m.it;mySit.on=m.abOn;mySit.fa=m.fainted;drawMySit();document.querySelectorAll('[data-hpopt]').forEach(function(x){x.checked=m.ho.indexOf(x.dataset.hpopt)>=0});hpOptSum();
  $i('mNa').value=m.na;$i('mSt').value=m.st;$i('fm').value=m.fm;['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value=m.lk[k];});
  $i('tmOn').checked=t.on;$i('tmSpd').checked=t.spd;$i('tmN').value=t.n;$i('tmM').value=t.m;$i('tmNat').value=t.nat;$i('tmWe').value=t.we;$i('tmTe').value=t.te;$i('tmB').value=t.b;goals=st.g;draw();}
 function saveLocal(){try{window.localStorage.setItem(LS_KEY,JSON.stringify(readState()));}catch(e){}}
