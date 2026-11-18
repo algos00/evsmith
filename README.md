@@ -18,7 +18,7 @@ A usage guide is built into the page ("How to use EVSmith").
 - Survive / KO / Speed goals with priorities; weather, terrain, screens, Tailwind, Helping Hand and more per goal.
 - Tries every nature, or the one you choose; fixes the points you want fixed.
 - For KO goals, shows the minimum points **with and without Helping Hand**.
-- Explains which goal needs each point, and can spend leftover points for the best resistance.
+- Explains which goal needs each point, and can spend leftover points for the best resistance or to tune the HP stat (Leftovers, Sitrus Berry, Life Orb, Substitute, poison…).
 - Optional tournament meta (usage and sets from online Limitless tournaments).
 - Share a setup as a link; export a set for Pokémon Showdown.
 

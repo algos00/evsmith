@@ -68,6 +68,29 @@ while (scenarios.length < NSC) {
   }
   console.log(`why-these-points: ${pinChecks} scenarios, pins agree with a direct one-point-less check`);
 
+  /* 2b. Extra HP optimizations: best reachable HP stat, goals never weakened, only leftover points used */
+  const PRED = { recovery: x => x % 16 === 0, poisonheal: x => x % 8 === 0, sitrus: x => x % 4 === 0, residual: x => x % 16 === 15, poison: x => x % 8 === 7, lifeorb: x => x % 10 === 9, substitute: x => x % 4 === 1 };
+  const keys = Object.keys(PRED); let hpChecks = 0;
+  for (let i = 0; i < 400; i++) {
+    const base = pick([45, 60, 78, 80, 95, 108, 120, 150]), hp0 = rnd.int(33), room = rnd.int(33 - hp0), sel = keys.filter(() => rnd() < .35);
+    if (rnd() < .3) sel.push(pick(['maxhp', 'minhp']));
+    const t = S.tuneHp(base, hp0, room, sel), conds = sel.filter(k => PRED[k]);
+    let bestCount = -1; for (let a = 0; a <= room; a++) bestCount = Math.max(bestCount, conds.filter(k => PRED[k](A.hpOf(base, hp0 + a))).length);
+    assert.strictEqual(t.best.ok.length, bestCount, 'HP tuning must reach the most conditions possible');
+    const cands = []; for (let a = 0; a <= room; a++) if (conds.filter(k => PRED[k](A.hpOf(base, hp0 + a))).length === bestCount) cands.push(a);
+    assert.strictEqual(t.best.add, sel.includes('maxhp') && !sel.includes('minhp') ? Math.max(...cands) : Math.min(...cands), 'tie-break (Max HP / Min HP)');
+    hpChecks++;
+  }
+  for (let i = 0; i < 12; i++) {
+    const sc = scenarios[i], M = Object.assign({}, sc.M, { fm: 'none', hpOpt: ['sitrus', 'lifeorb'] }), r = await S.solve(M, sc.goals, {}, () => {});
+    if (!r) continue;
+    assert(r.S1.hp >= r.S.hp && r.S1.hp - r.S.hp <= r.free, 'HP tuning may only use leftover points');
+    ['at', 'df', 'sa', 'sd', 'sp'].forEach(k => assert.strictEqual(r.S1[k], r.S[k]));
+    sc.goals.forEach(g => { if (S.gp(M, r.S, r.nat, { atts: [attOf(g)] }) >= +g.thr - 1e-9) assert(S.gp(M, r.S1, r.nat, { atts: [attOf(g)] }) >= +g.thr - 1e-9, 'HP tuning broke a goal'); });
+    if (M.lock.hp != null) assert.strictEqual(r.S1.hp, r.S.hp, 'locked HP changed');
+  }
+  console.log(`Extra HP optimizations: ${hpChecks} random cases + 12 solves: best reachable HP stat, goals preserved, only leftover points used`);
+
   /* 3. Foul Play uses the defender's Atk: the optimizer must keep the goal met when it also needs Atk for a KO */
   const M = { name: 'Incineroar', ability: 'Intimidate', item: '', nature: 'Adamant', status: 'Healthy', fm: 'none', lock: Object.assign({}, NOLOCK) };
   const fp = S.newGoal('surv'); Object.assign(fp, { sp: 'Sableye', ab: 'Prankster', mv: 'Foul Play', spA: 0, thr: '1', w: '1000', na: 'Hardy', f: { weather: '', terrain: '' } });

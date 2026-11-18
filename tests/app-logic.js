@@ -24,6 +24,7 @@ ${stmt('var STA=')}
 ${stmt('var WE=')}
 ${stmt('var CK=')}
 ${stmt('var SIT=')}
+${stmt('var HPOPT=')}
 var THR=[];for(var q=16;q>=1;q--)THR.push([String(q/16),q===16?'100% (always)':(q*6.25)+'%']);
 ${fn('newGoal')}
 ${ui.slice(pureStart, pureEnd)}
@@ -58,6 +59,12 @@ ok('hostile input is neutralised', () => {
   assert(!/[<>]/.test(out), 'markup survived: ' + out);
   assert.strictEqual(c.g.length, 1); assert.strictEqual(c.g[0].sp, ''); assert.strictEqual(typeof c.g[0].spA, 'number'); assert.strictEqual(c.g[0].f.weather, 'auto'); assert(!('evil"key' in c.g[0].f));
   assert.strictEqual(c.m.sp, 'Incineroar'); assert.strictEqual(c.m.lk.hp, '');
+});
+ok('HP optimizations list is validated', () => {
+  const s = sample(); s.m.ho = ['recovery', 'recovery', 'evil"><b>', 'maxhp', 'minhp', 'lifeorb', 7];
+  const c = T.cleanState(s); assert.strictEqual(JSON.stringify(c.m.ho), JSON.stringify(['recovery', 'maxhp', 'lifeorb']));
+  assert.strictEqual(JSON.stringify(T.decodeShare(T.encodeShare(c)).m.ho), JSON.stringify(['recovery', 'maxhp', 'lifeorb']));
+  s.m.ho = 'nope'; assert.strictEqual(JSON.stringify(T.cleanState(s).m.ho), '[]');
 });
 ok('numbers are clamped', () => {
   const s = sample(); s.g[0].spA = 999; s.g[0].bo = -50; s.g[1].pct = -5; s.m.lk.at = 77;

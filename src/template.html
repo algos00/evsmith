@@ -47,6 +47,7 @@ Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind,
 <h3>Good to know</h3>
 <ul>
 <li>The “Where should leftover points go?” list has a <b>Resistance</b> mode: it searches every HP/Def/SpD split of the leftover points and keeps the one with the best average HP margin against the attacks in your Survive goals (and the tournament meta, if on).</li>
+<li><b>Extra HP optimizations</b> (section 1) tune the HP stat with leftover points: multiples of 16 for Leftovers-type recovery, 4n for Sitrus Berry, 10n-1 for Life Orb, 4n+1 for Substitute and so on. Max HP and Min HP choose between equal options. Your goals are never weakened.</li>
 <li>Level 50, doubles, IVs 31. Spread moves are reduced by 25% (two targets). Critical hits are optional per goal.</li>
 <li>On multi-hit moves, Multiscale and damage-reducing berries only work on the first hit.</li>
 <li>Weather and terrain in “Auto” come only from abilities that set them when the Pokémon enters (Drought, Drizzle, Sand Stream, Snow Warning and the Surges). Sand Spit and Seed Sower trigger only after being hit, so choose the weather or terrain by hand if you want to assume they are active.</li>
@@ -70,6 +71,9 @@ Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind,
 <div class="g6"><div><label>HP</label><input type="number" id="lk_hp" min="0" max="32" placeholder="auto"></div><div><label>Atk</label><input type="number" id="lk_at" min="0" max="32" placeholder="auto"></div><div><label>Def</label><input type="number" id="lk_df" min="0" max="32" placeholder="auto"></div><div><label>SpA</label><input type="number" id="lk_sa" min="0" max="32" placeholder="auto"></div><div><label>SpD</label><input type="number" id="lk_sd" min="0" max="32" placeholder="auto"></div><div><label>Spe</label><input type="number" id="lk_sp" min="0" max="32" placeholder="auto"></div></div>
 <label>Where should leftover points go?</label>
 <select id="fm"><option value="smart">Smart: only where it buys something</option><option value="bulk">Bulk (HP, Def, SpD)</option><option value="resist">Resistance: best against my Survive goals</option><option value="offense">Offense</option><option value="speed">Speed</option><option value="none">Leave them free</option></select>
+<details class="fld" id="hpOpt"><summary>Extra HP optimizations <span class="mu" id="hpOptSum"></span></summary>
+<p class="mu">Spends leftover points on HP so that your HP stat fits what you tick (n is any whole number). It never takes points from your goals.</p>
+<div id="hpOptList"></div></details>
 </div>
 
 <div class="card">

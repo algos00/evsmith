@@ -45,10 +45,22 @@ function spdOk(M,S,nat){A.mkField(S.fo||FOG);var o=[];for(var s=0;s<=32;s++){var
 
 /* ---------- ottimizzatore ---------- */
 /* ---------- come spendere i punti avanzati ---------- */
+/* Extra HP optimizations: the HP stat is tuned with leftover points so that it fits what the player ticked (n = any whole number) */
+var HPOPT=[['recovery','Recovery','16n',function(s){return s%16===0}],['poisonheal','Poison Heal','8n',function(s){return s%8===0}],['sitrus','Sitrus Berry','4n',function(s){return s%4===0}],['residual','Residual damage','16n-1',function(s){return s%16===15}],['poison','Poison','8n-1',function(s){return s%8===7}],['lifeorb','Life Orb','10n-1',function(s){return s%10===9}],['substitute','Substitute','4n+1',function(s){return s%4===1}],['maxhp','Max HP','prefer high HP'],['minhp','Min HP','prefer low HP']];
+function tuneHp(base,hp0,room,sel){var conds=HPOPT.filter(function(r){return r[3]&&sel.indexOf(r[0])>=0}),high=sel.indexOf('maxhp')>=0&&sel.indexOf('minhp')<0,best=null;
+ if(base===1)room=0;
+ for(var a=0;a<=room;a++){var st=A.hpOf(base,hp0+a),ok=conds.filter(function(r){return r[3](st)});
+  if(!best||ok.length>best.ok.length||(ok.length===best.ok.length&&high&&a>best.add))best={add:a,stat:st,ok:ok};}
+ return{best:best,conds:conds.length,high:high};}
 function spendFree(M,S,free,mode,nat,ctx){
  var S1={hp:S.hp,at:S.at,df:S.df,sa:S.sa,sd:S.sd,sp:S.sp},why=[];
- if(free<=0||mode==='none')return{S:S1,why:why,left:free};
+ if(free<=0)return{S:S1,why:why,left:free};
  var bs=DEX[M.name].bs,room=function(k){return M.lock[k]==null?32-S1[k]:0;},left=free;
+ if(M.hpOpt&&M.hpOpt.length&&room('hp')>0){var tn=tuneHp(bs.hp,S1.hp,Math.min(left,room('hp')),M.hpOpt),b=tn.best,was=A.hpOf(bs.hp,S1.hp),nm2=b.ok.map(function(r){return r[1]+' ('+r[2]+')'}).join(', ');
+  if(b.add>0){S1.hp+=b.add;left-=b.add;why.push('HP +'+b.add+' — HP stat '+was+' → '+b.stat+(nm2?', fits '+nm2:'')+(tn.high&&!tn.conds?' (you chose Max HP)':''));}
+  else if(tn.conds&&b.ok.length)why.push('HP stat '+was+' already fits '+nm2+': no HP points added for it.');
+  else if(tn.conds)why.push('HP tuning: none of the ticked HP conditions can be reached with the points left (HP stat stays '+was+').');}
+ if(mode==='none'||left<=0)return{S:S1,why:why,left:left};
  var kos=((ctx&&ctx.kos)||[]).filter(function(K){return !K.meta}),cw={at:0,sa:0},names={at:[],sa:[]};
  kos.forEach(function(K){var m=MV[K.move];if(!m||K.move==='Body Press')return;var k=m.category==='Special'?'sa':'at';cw[k]+=K.w;if(names[k].indexOf(K.move)<0)names[k].push(K.move);});
  var o=(cw.at>0||cw.sa>0)?(cw.at>=cw.sa?'at':'sa'):null;
@@ -283,7 +295,7 @@ function cleanGoal(g){if(!g||['surv','ko','spd'].indexOf(g.t)<0)return null;var 
 function cleanState(raw){if(!raw||typeof raw!=='object'||raw.v!==1)return null;var m=raw.m||{},t=raw.t||{},lk={};
  ['hp','at','df','sa','sd','sp'].forEach(function(k){var v=m.lk&&m.lk[k];lk[k]=v===''||v==null?'':intOf(v,0,32,'');});
  var sp=DEX[m.sp]?m.sp:'Incineroar';
- return{v:1,m:{sp:sp,ab:m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab,it:m.it&&ITL.indexOf(m.it)>=0?m.it:'',na:m.na==='*'?'*':pickOf(Object.keys(NATURES),m.na,'*'),st:pickOf(STA,m.st,'Healthy'),fm:pickOf(['smart','bulk','resist','offense','speed','none'],m.fm,'smart'),abOn:m.abOn===true&&!!SIT[m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab],fainted:intOf(m.fainted,0,5,0),lk:lk},
+ return{v:1,m:{sp:sp,ab:m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab,it:m.it&&ITL.indexOf(m.it)>=0?m.it:'',na:m.na==='*'?'*':pickOf(Object.keys(NATURES),m.na,'*'),st:pickOf(STA,m.st,'Healthy'),fm:pickOf(['smart','bulk','resist','offense','speed','none'],m.fm,'smart'),abOn:m.abOn===true&&!!SIT[m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab],fainted:intOf(m.fainted,0,5,0),ho:(Array.isArray(m.ho)?m.ho:[]).filter(function(k,i,a){return HPOPT.some(function(r){return r[0]===k})&&a.indexOf(k)===i}).filter(function(k,i,a){return !(k==='minhp'&&a.indexOf('maxhp')>=0)}),lk:lk},
   t:{on:t.on===true,spd:t.spd===true,n:pickOf(['5','8','10','12','15','20','25','40','60'],String(t.n),'12'),m:pickOf(['1','2','3'],String(t.m),'2'),nat:pickOf(['off','neu'],t.nat,'off'),we:pickOf(WE.map(function(x){return x[0]}),t.we,'auto'),te:pickOf(TE.map(function(x){return x[0]}),t.te,'auto'),b:pickOf(['12','24','36','66'],String(t.b),'24')},
   g:(Array.isArray(raw.g)?raw.g.slice(0,30):[]).map(cleanGoal).filter(Boolean)};}
 function encodeShare(st){return b64enc(JSON.stringify(st));}
@@ -317,7 +329,7 @@ function oppCfg(g){var sp={hp:0,at:0,df:0,sa:0,sd:0,sp:0},bo={};
 function err(m){var r=$i('res');r.hidden=false;r.innerHTML='<p class="bad">'+m+'</p>';}
 $i('go').onclick=async function(){
  var btn=this,res=$i('res');
- var M={name:$i('mSp').value.trim(),ability:$i('mAb').value,item:$i('mIt').value,nature:$i('mNa').value,status:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,lock:{}};
+ var M={name:$i('mSp').value.trim(),ability:$i('mAb').value,item:$i('mIt').value,nature:$i('mNa').value,status:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,hpOpt:hpOptSel(),lock:{}};
  var lsum=0;['hp','at','df','sa','sd','sp'].forEach(function(k){var v=$i('lk_'+k).value;M.lock[k]=v===''?null:Math.max(0,Math.min(32,+v||0));lsum+=M.lock[k]||0;});
  if(lsum>66)return err('The fixed points add up to more than 66.');
  if(!DEX[M.name])return err('Pick a valid Pokémon for your own Pokémon (choose from the list).');
@@ -370,13 +382,17 @@ function show(r,M,ms){var K=['hp','at','df','sa','sd','sp'],mineG=r.goals.filter
  $i('res').innerHTML=h;if($i('res').scrollIntoView)$i('res').scrollIntoView({behavior:'smooth'});}
 (function(){if(typeof TMETA==='undefined')return;$i('metaTxt').textContent=TMETA.source+', '+TMETA.format+', tournaments with '+TMETA.minPlayers+'+ players over the last '+TMETA.days+' days ('+TMETA.teams.toLocaleString('en-US')+' teams). Collected on '+TMETA.date+' and not updated automatically; where no reliable data exists, the field is left empty.';})();
 $i('mSp').value='Incineroar';$i('mSp').onchange();$i('mAb').onchange=function(){mySit.on=false;drawMySit();};$i('mSit').addEventListener('change',function(e){if(e.target.id==='mAbOn')mySit.on=e.target.checked;if(e.target.id==='mFaint')mySit.fa=+e.target.value;});drawMySit();draw();
+$i('hpOptList').innerHTML=HPOPT.map(function(r){return '<label class="ck"><input type="checkbox" data-hpopt="'+r[0]+'"> '+r[1]+' <span class="mu fm">'+r[2]+'</span></label>'}).join('');
+function hpOptSel(){return [].slice.call(document.querySelectorAll('[data-hpopt]')).filter(function(x){return x.checked}).map(function(x){return x.dataset.hpopt});}
+function hpOptSum(){var n=hpOptSel().length;$i('hpOptSum').textContent=n?'· '+n+' on':'';}
+$i('hpOptList').addEventListener('change',function(e){var k=e.target.dataset.hpopt,o=k==='maxhp'?'minhp':k==='minhp'?'maxhp':'';if(o&&e.target.checked)document.querySelector('[data-hpopt="'+o+'"]').checked=false;hpOptSum();});
 /* ---------- saved state, share link, export (DOM side) ---------- */
 var LS_KEY='evsmith.state.v1',toolT=null;
 function readState(){var lk={};['hp','at','df','sa','sd','sp'].forEach(function(k){lk[k]=$i('lk_'+k).value;});
- return{v:1,m:{sp:$i('mSp').value.trim(),ab:$i('mAb').value,it:$i('mIt').value,na:$i('mNa').value,st:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,lk:lk},
+ return{v:1,m:{sp:$i('mSp').value.trim(),ab:$i('mAb').value,it:$i('mIt').value,na:$i('mNa').value,st:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,ho:hpOptSel(),lk:lk},
   t:{on:$i('tmOn').checked,spd:$i('tmSpd').checked,n:$i('tmN').value,m:$i('tmM').value,nat:$i('tmNat').value,we:$i('tmWe').value,te:$i('tmTe').value,b:$i('tmB').value},
   g:goals.map(function(g){var o={};Object.keys(g).forEach(function(k){if(k!=='fOpen'&&k!=='note')o[k]=g[k]});return o;})};}
-function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;$i('mAb').innerHTML=abOpts(m.sp,m.ab);$i('mIt').disabled=itemLocked(m.sp);$i('mIt').value=m.it;mySit.on=m.abOn;mySit.fa=m.fainted;drawMySit();
+function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;$i('mAb').innerHTML=abOpts(m.sp,m.ab);$i('mIt').disabled=itemLocked(m.sp);$i('mIt').value=m.it;mySit.on=m.abOn;mySit.fa=m.fainted;drawMySit();document.querySelectorAll('[data-hpopt]').forEach(function(x){x.checked=m.ho.indexOf(x.dataset.hpopt)>=0});hpOptSum();
  $i('mNa').value=m.na;$i('mSt').value=m.st;$i('fm').value=m.fm;['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value=m.lk[k];});
  $i('tmOn').checked=t.on;$i('tmSpd').checked=t.spd;$i('tmN').value=t.n;$i('tmM').value=t.m;$i('tmNat').value=t.nat;$i('tmWe').value=t.we;$i('tmTe').value=t.te;$i('tmB').value=t.b;goals=st.g;draw();}
 function saveLocal(){try{window.localStorage.setItem(LS_KEY,JSON.stringify(readState()));}catch(e){}}
@@ -388,7 +404,7 @@ function legacyCopy(txt){try{var ta=document.createElement('textarea');ta.value=
 function shareUrl(){return location.href.split('#')[0]+'#s='+encodeShare(readState());}
 $i('shareBtn').onclick=function(){copyText(shareUrl(),'Link copied: it contains your Pokémon, goals and options.');};
 $i('resetBtn').onclick=function(){if(!confirm('Reset your Pokémon, goals and options?'))return;goals=[];['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value='';});
- $i('mSp').value='Incineroar';lastMe='';$i('mSp').onchange();$i('fm').value='smart';$i('tmOn').checked=false;$i('tmSpd').checked=false;$i('res').hidden=true;draw();try{window.localStorage.removeItem(LS_KEY);}catch(e){}
+ $i('mSp').value='Incineroar';lastMe='';$i('mSp').onchange();$i('fm').value='smart';document.querySelectorAll('[data-hpopt]').forEach(function(x){x.checked=false});hpOptSum();$i('tmOn').checked=false;$i('tmSpd').checked=false;$i('res').hidden=true;draw();try{window.localStorage.removeItem(LS_KEY);}catch(e){}
  if(location.hash)history.replaceState(null,'',location.href.split('#')[0]);say2('Everything was reset.');};
 document.addEventListener('change',queueSave);document.addEventListener('click',queueSave);
 (function(){var st=null;try{if(/^#s=/.test(location.hash))st=decodeShare(location.hash.slice(3));else{var raw=window.localStorage.getItem(LS_KEY);if(raw)st=cleanState(JSON.parse(raw));}}catch(e){st=null;}

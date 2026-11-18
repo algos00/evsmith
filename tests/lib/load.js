@@ -26,7 +26,7 @@ function loadApp(htmlPath) {
   let core = ui.slice(a, b);
   const extra = ['newField', 'flatField', 'oppCfg', 'newGoal'].map(n => braceBlock(ui, ui.indexOf('function ' + n + '('))).join('\n');
   const tail = `var NM={hp:'HP',at:'Atk',df:'Def',sa:'SpA',sd:'SpD',sp:'Spe'};
-globalThis.SOLVE={solve:solve,mkMe:mkMe,sv:sv,gp:gp,ko:ko,koNeed:koNeed,spdOk:spdOk,oppCfg:oppCfg,newGoal:newGoal,NATS:NATS,A:A,FOG:function(){return FOG}};`;
+globalThis.SOLVE={solve:solve,mkMe:mkMe,sv:sv,gp:gp,ko:ko,koNeed:koNeed,spdOk:spdOk,tuneHp:tuneHp,HPOPT:HPOPT,spendFree:spendFree,oppCfg:oppCfg,newGoal:newGoal,NATS:NATS,A:A,FOG:function(){return FOG}};`;
   const ctx = { console, setTimeout };
   ctx.window = ctx; ctx.globalThis = ctx;
   vm.createContext(ctx);
