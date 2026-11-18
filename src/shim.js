@@ -1,0 +1,1 @@
+try{window.localStorage.getItem("t")}catch(e){try{Object.defineProperty(window,"localStorage",{value:{getItem:function(){return null},setItem:function(){},removeItem:function(){}}})}catch(e2){}}

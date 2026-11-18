@@ -1,0 +1,13 @@
+{
+  "name": "evsmith-tests",
+  "private": true,
+  "description": "Regression tests for EVSmith.html (damage engine vs @smogon/calc, optimizer vs exhaustive search)",
+  "scripts": {
+    "test": "node run-all.js",
+    "test:engine": "node compare-smogon.js",
+    "test:optimizer": "node optimizer-bruteforce.js"
+  },
+  "devDependencies": {
+    "@smogon/calc": "0.12.0"
+  }
+}

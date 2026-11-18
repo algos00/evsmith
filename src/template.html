@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EVSmith</title>
+<style>@@src/style.css@@</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<main>
+<div class="hero"><svg viewBox="0 0 100 100" role="img" aria-label="EVSmith"><title>EVSmith</title><polygon points="50,50 50,6 88.1,28" style="fill:var(--s0);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,28 88.1,72" style="fill:var(--s1);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,72 50,94" style="fill:var(--s2);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 50,94 11.9,72" style="fill:var(--s3);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,72 11.9,28" style="fill:var(--s4);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,28 50,6" style="fill:var(--s5);stroke:var(--bg);stroke-width:2.5"/></svg><h1>EVSmith</h1></div>
+<p class="tag">Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it with the fewest points.</p>
+
+<div class="layout">
+<div class="col-in">
+<details class="card" id="guide"><summary><b>How to use EVSmith</b></summary>
+<div class="guide">
+<p>EVSmith finds the cheapest Stat Point spread (66 points in total, at most 32 per stat) that does everything you ask of your Pokémon: survive certain attacks, get certain KOs, outspeed or stay slower than certain Pokémon.</p>
+<ol>
+<li><b>Your Pokémon.</b> Pick the species, ability, item and nature. “Auto” tries every nature and keeps the best. Points you type in the “Fix some of your points” boxes are never changed; empty boxes are decided by the app.</li>
+<li><b>Goals.</b> Add as many as you need:
+<ul>
+<li><b>Survive</b>: an opponent, its move, its attack points and boost, and the minimum chance you want to survive. “I also take the hit above, same turn” adds two attacks in the same turn.</li>
+<li><b>Get a KO</b>: your move against an opponent whose HP, Def and SpD points you set. “HP left %” lets you ask for a partial KO (for example 50%). Tick “Count Helping Hand” if your ally will help.</li>
+<li><b>Speed</b>: outspeed an opponent, or stay slower than it (Trick Room).</li>
+</ul>
+Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind, Reflect, Light Screen, Aurora Veil, Friend Guard and Helping Hand, separately for your side and the opponent’s. “Auto” reads the weather and terrain from the abilities on the field (if both sides set one, the slower Pokémon’s wins, as in battle).</li>
+<li><b>Priority.</b> If not everything fits in 66 points, EVSmith drops the “Nice to have” goals first, then “Important”, and keeps “Required” as long as it can.</li>
+<li><b>Tournament meta (optional).</b> Adds goals built from the most used Pokémon in tournaments: surviving their best attacks and/or outspeeding them. Your own goals always come first; the meta only uses the extra points you allow. The button “Use the most used tournament set” in a goal fills ability, item, move and nature from tournament data.</li>
+<li>Press <b>Find the best spread</b>.</li>
+</ol>
+<h3>Reading the result</h3>
+<ul>
+<li>The coloured bar and the six boxes are the spread. “Free points” are the ones no goal needs; you are not forced to spend them, and a suggestion is given.</li>
+<li>Each goal shows ✅ (met), ❌ (not met) or 🤝 (met only with Helping Hand), the damage range in % of HP and the chance of reaching the threshold across the 16 damage rolls.</li>
+<li><b>Why these points?</b> lists, for every stat, the goals that need its last point (the goal is met with it and fails with one point less). If no single goal pins a stat, its points are a trade-off between HP, Def and SpD, or come from the extra points.</li>
+<li>For KO goals EVSmith also shows the <b>minimum Atk/SpA points without and with Helping Hand</b>, so you can see how many points the boost saves.</li>
+<li>“Other natures” lists the runner-up natures and whether they meet fewer goals.</li>
+</ul>
+<h3>Saving and sharing</h3>
+<ul>
+<li>Your Pokémon, goals and options are saved automatically in this browser and come back when you reopen the page.</li>
+<li><b>Copy link</b> puts your whole setup in a link you can send to someone; opening it loads the same goals. <b>Reset</b> clears everything.</li>
+<li>Under each result, <b>Copy set</b> gives text you can paste in Pokémon Showdown (Teambuilder → Import). The Stat Points go in the EVs line, which is how Showdown’s Champions format reads them. The moves are the ones from your KO goals.</li>
+</ul>
+<h3>Good to know</h3>
+<ul>
+<li>The “Where should leftover points go?” list has a <b>Resistance</b> mode: it searches every HP/Def/SpD split of the leftover points and keeps the one with the best average HP margin against the attacks in your Survive goals (and the tournament meta, if on).</li>
+<li>Level 50, doubles, IVs 31. Spread moves are reduced by 25% (two targets). Critical hits are optional per goal.</li>
+<li>On multi-hit moves, Multiscale and damage-reducing berries only work on the first hit.</li>
+<li>Weather and terrain in “Auto” come only from abilities that set them when the Pokémon enters (Drought, Drizzle, Sand Stream, Snow Warning and the Surges). Sand Spit and Seed Sower trigger only after being hit, so choose the weather or terrain by hand if you want to assume they are active.</li>
+<li>Abilities that depend on the situation (Blaze, Torrent, Overgrow, Swarm, Flash Fire, Stakeout, Electromorphosis, Supreme Overlord) do nothing until you switch them on: your Pokémon’s in section 1, the opponent’s inside a Survive goal. Merciless makes every hit a critical hit against a poisoned target automatically.</li>
+<li>Foul Play uses <i>your</i> Atk. In a Survive goal against it, EVSmith tries each Atk value your KO goals need and keeps the best combination, and it will not add extra Atk points that would break that goal.</li>
+<li>Not supported: Counter, Mirror Coat, Metal Burst, Flail, Reversal, Fling, one-hit-KO moves, moves that depend on turn order, and the abilities Disguise and Imposter.</li>
+<li>Results are estimates for planning. Always test a spread in battle.</li>
+</ul>
+<h3>Example</h3>
+<p>You want Incineroar to survive a Wood Hammer from a Rillaboom with 32 Attack points, and to KO that Rillaboom with Flare Blitz. Pick Incineroar, add a “Survive” goal (Rillaboom, Wood Hammer, 32 attack points, 100%) and a “Get a KO” goal (Flare Blitz on Rillaboom), then press the button. EVSmith returns the fewest points that do both, and what is left over.</p>
+</div>
+</details>
+
+<div class="card">
+<h2><span class="n">1</span>Your Pokémon</h2>
+<input class="ac" data-ac="mon" autocomplete="off" autocapitalize="off" spellcheck="false" id="mSp" placeholder="Pokémon (e.g. Incineroar)">
+<div class="g2"><div><label>Ability</label><select id="mAb"></select></div><div><label>Item</label><select id="mIt"></select></div></div>
+<div class="g2"><div><label>Nature</label><select id="mNa"></select></div><div><label>Status</label><select id="mSt"></select></div></div>
+<div id="mSit"></div>
+<label>Fix some of your points <span class="mu">(empty = the app decides)</span></label>
+<div class="g6"><div><label>HP</label><input type="number" id="lk_hp" min="0" max="32" placeholder="auto"></div><div><label>Atk</label><input type="number" id="lk_at" min="0" max="32" placeholder="auto"></div><div><label>Def</label><input type="number" id="lk_df" min="0" max="32" placeholder="auto"></div><div><label>SpA</label><input type="number" id="lk_sa" min="0" max="32" placeholder="auto"></div><div><label>SpD</label><input type="number" id="lk_sd" min="0" max="32" placeholder="auto"></div><div><label>Spe</label><input type="number" id="lk_sp" min="0" max="32" placeholder="auto"></div></div>
+<label>Where should leftover points go?</label>
+<select id="fm"><option value="smart">Smart: only where it buys something</option><option value="bulk">Bulk (HP, Def, SpD)</option><option value="resist">Resistance: best against my Survive goals</option><option value="offense">Offense</option><option value="speed">Speed</option><option value="none">Leave them free</option></select>
+</div>
+
+<div class="card">
+<h2><span class="n">2</span>What must it do?</h2>
+<div id="goals"></div>
+<div class="g3"><button class="add k-surv" id="addSurv">+ Survive</button><button class="add k-ko" id="addKo">+ Get a KO</button><button class="add k-spd" id="addSpd">+ Speed</button></div>
+</div>
+
+<div class="card">
+<h2><span class="n">3</span>Tournament meta (Reg M-C)</h2>
+<p class="mu">Two independent options: turn on one, the other, or both.</p>
+<label class="ck"><input type="checkbox" id="tmOn"> Survive the most used attacks in tournaments</label>
+<label class="ck"><input type="checkbox" id="tmSpd"> Outspeed the most used Pokémon (32 points, neutral nature)</label>
+<div class="g2"><div><label>Top Pokémon</label><select id="tmN"><option value="5">Top 5</option><option value="8">Top 8</option><option value="10">Top 10</option><option value="12" selected>Top 12</option><option value="15">Top 15</option><option value="20">Top 20</option><option value="25">Top 25</option><option value="40">Top 40</option><option value="60">Top 60</option></select></div><div><label>Attacks per Pokémon</label><select id="tmM"><option value="1">1 (most used)</option><option value="2" selected>2</option><option value="3">3</option></select></div></div>
+<label>Assume their attackers have…</label><select id="tmNat"><option value="off">32 points + offensive nature (worst case)</option><option value="neu">32 points + neutral nature</option></select>
+<div class="g2"><div><label>Weather for the meta</label><select id="tmWe"></select></div><div><label>Terrain for the meta</label><select id="tmTe"></select></div></div>
+<label>How many extra points can the meta use?</label><select id="tmB"><option value="12">Up to 12 points</option><option value="24" selected>Up to 24 points</option><option value="36">Up to 36 points</option><option value="66">No limit</option></select>
+<p class="mu">The meta is added to your own goals: your goals come first, then the meta uses the points you allow. Each attack counts by how many teams use the Pokémon, how high the attack is in its list, and how often it hits (accuracy). Tournament results do not show Stat Points, so the points are assumptions.</p>
+</div>
+
+<details class="card" id="allMon"><summary><b>All Pokémon and their tournament data</b></summary>
+<input type="text" id="amQ" placeholder="Search a Pokémon…" style="margin:8px 0">
+<div style="overflow-x:auto"><table id="amT"></table></div>
+<p class="mu">Blank means I have no certain data. Usage = share of tournament teams (online events, last 30 days, Reg M-C). Abilities, items and moves come from tournament results, most used first; percentages are shown where I have them.</p>
+</details>
+
+</div>
+<div class="col-out">
+<div class="cta"><button id="go">Find the best spread</button></div>
+<div class="tools"><button class="mini" id="shareBtn" type="button">🔗 Copy link</button><button class="mini" id="resetBtn" type="button">↺ Reset</button><span class="mu" id="toolMsg" role="status" aria-live="polite"></span></div>
+<div class="card" id="res" hidden></div>
+<p class="mu hint-desk" id="hintDesk">Your spread will appear here.</p>
+</div>
+</div>
+
+<footer class="disc">
+<p><b>Unofficial fan project.</b> EVSmith is not affiliated with, sponsored by or endorsed by Nintendo, Game Freak, Creatures Inc. or The Pokémon Company. Pokémon and all related names are trademarks of their respective owners and are used here only to identify the games’ characters and mechanics. EVSmith is free, has no commercial purpose, and contains no game files, images or sounds.</p>
+<ul>
+<li><b>Game data</b> (Pokémon, moves, abilities, items, learnsets) is generated from the public data of Pokémon Showdown, MIT license (notice below).</li>
+<li><b>Damage engine, optimizer and interface</b> were written for EVSmith for Pokémon Champions (level 50, doubles). The engine was compared with the independent calculator @smogon/calc on 40,000 random cases covering abilities, items, status, boosts, weather, terrain, screens and Helping Hand; the differences left come from Champions-specific move data (for example claw moves counting as slicing) and from one-point rounding differences when several stat modifiers stack. The abilities that need a situation were compared with it on a further 12,000 cases. The optimizer was checked against an exhaustive search on 132 random scenarios, including scenarios where not every goal can be met, scenarios that try every nature and scenarios with Foul Play.</li>
+<li><b>Tournament usage, abilities, items, moves and natures</b>: <span id="metaTxt">MunchStats (online Limitless tournaments, Regulation M-C). Collected on 14 November 2026 and not updated automatically; where no reliable data exists, the field is left empty.</span></li>
+<li>Results are estimates for planning, with no warranty of any kind. Always test a spread in battle.</li>
+</ul>
+<p class="ver">EVSmith version {{version}} · build {{build}}</p>
+</footer>
+<details><summary>License</summary><pre style="white-space:pre-wrap">The MIT License (MIT)
+
+Copyright (c) 2011-2026 Guangcong Luo and other contributors http://pokemonshowdown.com/
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</pre></details>
+</main>
+<script>@@src/shim.js@@</script>
+<script>@@src/data.js@@</script>
+<script>@@src/tdata.js@@</script>
+<script>@@src/engine.js@@</script>
+<script>@@src/ui.js@@</script>
+</body>
+</html>
