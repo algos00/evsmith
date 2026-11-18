@@ -2,7 +2,7 @@
 
 All notable changes to EVSmith. Versions follow the Git tags (`vX.Y.Z`).
 
-## Unreleased
+## 1.3.0
 
 - Italian interface (🌐 button), chosen automatically from the browser language the first time and remembered.
 - Import a Pokémon Showdown set, and “Check my spread” to test the points you already have without optimizing.
