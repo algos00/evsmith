@@ -171,3 +171,7 @@ footer.disc{padding:16px;border:1px solid var(--bd);border-radius:var(--r);backg
 
 .tag{max-width:44ch}
 @media (max-width:639px){.top{align-items:flex-start}.hero-art{margin-top:6px}}
+/* header: the text column and the picture column never overlap */
+.top-in{flex:0 1 56%}
+@media (min-width:640px) and (max-width:999px){.hero-art{flex:1 1 0;min-width:250px}.ha2{display:none}}
+@media (min-width:1000px){.top-in{flex:0 1 auto}}
