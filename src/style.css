@@ -189,3 +189,7 @@ footer.disc{padding:16px;border:1px solid var(--bd);border-radius:var(--r);backg
 textarea{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--bd);background:var(--card2);color:var(--tx);font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;resize:vertical}
 
 @media (max-width:639px){.ha1{display:none}.ha0{width:88px;height:88px;right:2px;top:10px}.hero-art{min-width:100px}}
+/* the header pictures are absolutely placed from the right: their box never gets narrower than the pictures it shows,
+   so a wide font or a long tagline wraps the text instead of sliding under them */
+@media (min-width:1000px) and (max-width:1199px){.ha3,.ha4{display:none}.hero-art{min-width:430px}}
+@media (min-width:1200px){.hero-art{min-width:590px}}

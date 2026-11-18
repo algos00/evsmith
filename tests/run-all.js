@@ -18,8 +18,7 @@ const steps = full ? [
   ['features', ['features.js', '1', '25']],
   ['app logic', ['app-logic.js']],
   ['colour contrast (WCAG)', ['contrast.js']],
-  ['Italian translation coverage', ['i18n.js']],
-  ['end-to-end in Chrome', ['e2e.js']]
+  ['Italian translation coverage', ['i18n.js']]
 ] : [
   ['engine vs @smogon/calc', ['compare-smogon.js', '1', '3000']],
   ...shard('optimizer vs exhaustive search', ['optimizer-bruteforce.js', '1', '16', '0']),
@@ -35,7 +34,10 @@ const run = ([name, args]) => new Promise(res => {
   let out = ''; p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
   p.on('close', code => res({ name, args, code, out, ms: Date.now() - t }));
 });
-Promise.all(steps.map(run)).then(rs => {
+/* the end-to-end checks run after the others: with every core busy, page timings get slow enough to fail at random */
+const after = full ? [['end-to-end in Chrome', ['e2e.js']]] : [];
+Promise.all(steps.map(run)).then(async rs => {
+  for (const s of after) rs.push(await run(s));
   for (const r of rs) {
     const last = r.out.trim().split('\n').filter(l => /^\S/.test(l)).pop() || '';
     console.log(`${r.code === 0 ? ' ok ' : 'FAIL'}  ${r.name}  (${(r.ms / 1000).toFixed(1)} s)  ${r.code === 0 ? last : ''}`);

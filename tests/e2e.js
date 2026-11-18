@@ -111,10 +111,12 @@ async function test(name, fn) { try { await fn(); results++; console.log('  ok  
     assert.strictEqual(await q.evaluate(() => document.querySelectorAll('.gc').length), 0); await p.close(); await q.close();
   });
   await test('layout: no horizontal scroll, header text never overlaps the pictures', async () => {
-    for (const w of [360, 390, 640, 760, 940, 1100, 1366]) {
-      const p = await open(w, 900); await p.goto2(); await p.waitForFunction(() => document.querySelectorAll('.ha').length > 0); await new Promise(r => setTimeout(r, 400));
+    /* the fonts are not loaded here, so the text is drawn with the system fallback; the wider pass (letter-spacing) stands in
+       for a wider real font, which is how an overlap at 1000-1100px slipped through once */
+    for (const [w, ls] of [[360, 0], [390, 0], [640, 0], [760, 0], [940, 0], [1000, 2], [1100, 0], [1100, 2], [1366, 0], [1366, 2]]) {
+      const p = await open(w, 900); await p.goto2(); if (ls) await p.addStyleTag({ content: `.top-in *{letter-spacing:${ls}px}` }); await p.waitForFunction(() => document.querySelectorAll('.ha').length > 0); await new Promise(r => setTimeout(r, 400));
       const m = await p.evaluate(() => { const vis = [...document.querySelectorAll('.ha')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.getBoundingClientRect()), t = document.querySelector('.top-in').getBoundingClientRect(); return { sw: document.documentElement.scrollWidth, iw: innerWidth, over: vis.filter(r => r.left < t.right - 2 && r.right > t.left + 2 && r.top < t.bottom && r.bottom > t.top).length }; });
-      assert(m.sw <= m.iw + 1, `horizontal scroll at ${w}px (${m.sw} > ${m.iw})`); assert.strictEqual(m.over, 0, `header art overlaps the text at ${w}px`); await p.close();
+      assert(m.sw <= m.iw + 1, `horizontal scroll at ${w}px (${m.sw} > ${m.iw})`); assert.strictEqual(m.over, 0, `header art overlaps the text at ${w}px (letter-spacing ${ls}px)`); await p.close();
     }
   });
   await test('accessibility: every field and button has a name; tokens have contrast', async () => {
