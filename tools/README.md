@@ -1,6 +1,7 @@
 # tools
 
-`update-meta.js` refreshes `src/tdata.js` (tournament usage and sets) from MunchStats' public JSON
+`build-hero.js` bundles `src/hero/hero.src.js` with three.js into `src/hero/hero.js` (needs `npm install --prefix tools` once;
+the output is committed). `update-meta.js` refreshes `src/tdata.js` (tournament usage and sets) from MunchStats' public JSON
 (data from Limitless TCG). It waits 10 s between requests (the site's robots.txt crawl-delay), sends no personal data,
 and caches the answers in `tools/.cache/`.
 

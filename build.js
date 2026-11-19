@@ -12,18 +12,20 @@ const vars = { version, build: sha ? `${date} · ${sha}` : date };
 let html = tpl
   .replace(/@@(src\/[\w.-]+)@@/g, (_, f) => fs.readFileSync(path.join(root, f), 'utf8'))
   .replace(/\{\{(version|build)\}\}/g, (_, k) => vars[k]);
-/* Content-Security-Policy: only this page's own scripts (by hash), the Google Fonts and the PokéAPI sprites may load */
+/* Content-Security-Policy: this page's own scripts (by hash) and the 3D hero module from the same origin, the Google Fonts and the PokéAPI sprites may load; connect-src/img-src blob: are what the glTF loader needs to decode the model's textures */
 const crypto = require('crypto');
 const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${crypto.createHash('sha256').update(m[1], 'utf8').digest('base64')}'`);
-const csp = ["default-src 'none'", `script-src ${hashes.join(' ')}`, "style-src 'unsafe-inline' https://fonts.googleapis.com", 'font-src https://fonts.gstatic.com', "img-src 'self' data: https://raw.githubusercontent.com", "connect-src 'none'", "manifest-src 'self'", "worker-src 'self'", "base-uri 'none'", "form-action 'none'"].join('; ');
+const csp = ["default-src 'none'", `script-src 'self' ${hashes.join(' ')}`, "style-src 'unsafe-inline' https://fonts.googleapis.com", 'font-src https://fonts.gstatic.com', "img-src 'self' data: blob: https://raw.githubusercontent.com", "connect-src 'self' blob:", "manifest-src 'self'", "worker-src 'self'", "base-uri 'none'", "form-action 'none'"].join('; ');
 html = html.replace('{{csp}}', csp);
 if (/@@src\/|\{\{csp\}\}|\{\{(version|build)\}\}/.test(html)) throw new Error('unresolved marker');
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, html);
-/* files that go next to the page when it is served (GitHub Pages): service worker, manifest, icons */
+/* files that go next to the page when it is served (GitHub Pages): service worker, manifest, icons, 3D hero */
 const dir = path.dirname(out);
 fs.writeFileSync(path.join(dir, 'sw.js'), fs.readFileSync(path.join(root, 'src', 'sw.js'), 'utf8').replace(/\{\{version\}\}/g, version));
 fs.copyFileSync(path.join(root, 'src', 'manifest.webmanifest'), path.join(dir, 'manifest.webmanifest'));
 fs.mkdirSync(path.join(dir, 'icons'), { recursive: true });
 fs.readdirSync(path.join(root, 'src', 'icons')).forEach(f => fs.copyFileSync(path.join(root, 'src', 'icons', f), path.join(dir, 'icons', f)));
+fs.mkdirSync(path.join(dir, 'hero'), { recursive: true });
+['hero.js', 'garchomp.glb'].forEach(f => fs.copyFileSync(path.join(root, 'src', 'hero', f), path.join(dir, 'hero', f)));
 console.log(`built ${out} (${html.length} bytes)`);

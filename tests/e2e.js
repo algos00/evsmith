@@ -10,7 +10,7 @@ const CANDIDATES = [process.env.CHROME_PATH, '/usr/bin/google-chrome-stable', '/
 const chrome = CANDIDATES.find(p => fs.existsSync(p));
 if (!chrome) { console.log('e2e: no Chrome found (set CHROME_PATH)'); process.exit(process.env.CI ? 1 : 0); }
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png', '.glb': 'model/gltf-binary', '.webmanifest': 'application/manifest+json' };
 const server = http.createServer((req, res) => {
   let f = decodeURIComponent(req.url.split('?')[0]); if (f === '/') f = '/EVSmith.html';
   const file = path.join(DIST, f); if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
@@ -32,7 +32,9 @@ async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.no
     await page.setRequestInterception(true);
     page.on('request', r => {
       const u = new URL(r.url());
-      if (u.origin === new URL(base).origin || u.protocol === 'data:') return r.continue();
+      /* the 3D hero renders in software here and would slow every other check down: only the "3D hero" test loads it, the others see the plain header */
+      if (u.origin === new URL(base).origin && u.pathname.startsWith('/hero/') && !opts.hero) return r.abort();
+      if (u.origin === new URL(base).origin || u.protocol === 'data:' || u.protocol === 'blob:') return r.continue();
       log.hosts.add(u.hostname);
       if (u.hostname === 'raw.githubusercontent.com') return r.respond({ status: 200, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' }, body: PNG });
       if (u.hostname === 'fonts.googleapis.com') return r.respond({ status: 200, contentType: 'text/css', body: '/* offline */' });
@@ -171,6 +173,33 @@ async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.no
     await p.reload({ waitUntil: 'load' }); await new Promise(r => setTimeout(r, 500));
     await p.setOfflineMode(true); await p.reload({ waitUntil: 'load' }).catch(() => {});
     assert(/EVSmith/.test(await p.title()) && await p.evaluate(() => !!document.getElementById('go')), 'page must load offline'); await p.setOfflineMode(false); await p.close();
+  });
+  await test('3D hero: full-height, model loads, drag and arrow keys turn it, plain header without it', async () => {
+    /* software WebGL (SwiftShader) so it also works on a machine or CI runner without a GPU */
+    const hb = await puppeteer.launch({ executablePath: chrome, headless: 'new', args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--lang=en-US'] });
+    try {
+      const p = await open(1280, 800, { hero: true, browser: hb }); await p.goto2();
+      await p.waitForSelector('#stage3d.is-ready', { timeout: 30000 });
+      const m = await p.evaluate(() => { const s = document.getElementById('stage').getBoundingClientRect(), vis = e => !!e && e.getClientRects().length > 0;
+        return { hasStage: document.documentElement.classList.contains('has-stage'), h: Math.round(s.height), vh: innerHeight, topShown: vis(document.querySelector('.top')),
+          h1: [...document.querySelectorAll('h1')].filter(vis).length, canvas: !!document.querySelector('#stage3d canvas'), label: document.querySelector('#stage3d canvas').getAttribute('aria-labelledby'),
+          hint: !!document.getElementById('stageHint') }; });
+      assert(m.hasStage && m.canvas && m.hint, 'hero must be active: ' + JSON.stringify(m));
+      assert(m.h >= m.vh - 1, `hero must fill the screen (${m.h} px of ${m.vh})`);
+      assert(!m.topShown && m.h1 === 1, `plain header must be hidden and only one h1 visible: ${JSON.stringify(m)}`);
+      assert.strictEqual(m.label, 'stageAlt'); assert((await p.evaluate(() => document.getElementById('stageAlt').textContent)).length > 20, 'model needs a text alternative');
+      const box = await (await p.$('#stage3d canvas')).boundingBox();
+      await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await p.mouse.down(); await p.mouse.move(box.x + box.width / 2 + 200, box.y + box.height / 2, { steps: 6 }); await p.mouse.up();
+      assert(await p.evaluate(() => document.getElementById('stage3d').classList.contains('is-touched')), 'dragging must register');
+      await p.focus('#stage3d canvas'); await p.keyboard.press('ArrowRight');
+      await p.click('.stage-go'); await p.waitForFunction(() => scrollY > 200, { timeout: 5000 });
+      assert.strictEqual(p.log.errors.join(' | '), ''); assert.deepStrictEqual(await p.evaluate(() => window.__csp), []); assert.deepStrictEqual(p.log.bad, []);
+      await p.close();
+      /* without the hero (as over file:// or without WebGL) the normal header stays */
+      const q = await open(1280, 800); await q.goto2();
+      const f = await q.evaluate(() => ({ has: document.documentElement.classList.contains('has-stage'), stage: getComputedStyle(document.getElementById('stage')).display, top: getComputedStyle(document.querySelector('.top')).display }));
+      assert(!f.has && f.stage === 'none' && f.top !== 'none', 'fallback header: ' + JSON.stringify(f)); await q.close();
+    } finally { await hb.close(); }
   });
   await layout;
   await browser.close(); server.close();

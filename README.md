@@ -45,6 +45,7 @@ Edit the files in `src/`, never `dist/`. How the code is organized, how to refre
 ## Data and licenses
 
 - **Pictures:** Pokémon sprites and artwork are **not** stored in this repository. The page loads them at runtime from the [PokéAPI sprites](https://github.com/PokeAPI/sprites) repository (hosted by GitHub). They belong to Nintendo, Game Freak and The Pokémon Company and are not covered by the MIT license.
+- **3D model** (header, only when the page is served online): “Garchomp” by [Icefer547](https://sketchfab.com/Icefer547) on [Sketchfab](https://sketchfab.com/3d-models/garchomp-dcb3101f15bb409d88c154e33dbcb118), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); textures reduced to 1024 px and converted to WebP. It *is* stored in this repository (`src/hero/garchomp.glb`). The character is © Nintendo, Game Freak and The Pokémon Company and is not covered by that license or by the MIT license. Shown with [three.js](https://threejs.org) (MIT).
 - **Code:** MIT, see [`LICENSE`](LICENSE).
 - **Game data:** generated from the public data of [Pokémon Showdown](https://github.com/smogon/pokemon-showdown) (MIT; notice included in the built page).
 - **Tournament usage and sets:** [MunchStats](https://www.munchstats.com) (data from Limitless TCG).

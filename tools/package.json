@@ -1,0 +1,12 @@
+{
+  "name": "evsmith-tools",
+  "private": true,
+  "description": "Build-time tools for EVSmith (not part of the shipped page)",
+  "scripts": {
+    "build-hero": "node build-hero.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "three": "0.170.0"
+  }
+}
