@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }); fs.createReadStream(file).pipe(res);
 });
 let results = 0; const failures = [];
-async function test(name, fn) { try { await fn(); results++; console.log('  ok  ' + name); } catch (e) { failures.push(name); console.log('  FAIL ' + name + '\n       ' + String(e.message).split('\n').slice(0, 4).join(' / ').slice(0, 600)); } }
+async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.now() - t0) / 1000).toFixed(1)} s)`; try { await fn(); results++; console.log('  ok  ' + name + ms()); } catch (e) { failures.push(name); console.log('  FAIL ' + name + ms() + '\n       ' + String(e.message).split('\n').slice(0, 4).join(' / ').slice(0, 600)); } }
 
 (async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -26,7 +26,7 @@ async function test(name, fn) { try { await fn(); results++; console.log('  ok  
   const ctx = browser.defaultBrowserContext(); await ctx.overridePermissions(new URL(base).origin, ['clipboard-read', 'clipboard-write']).catch(() => {});
 
   async function open(w, h, opts = {}) {
-    const page = await browser.newPage(); await page.setViewport({ width: w || 1280, height: h || 900 });
+    const page = await (opts.browser || browser).newPage(); await page.setViewport({ width: w || 1280, height: h || 900 });
     const log = { errors: [], hosts: new Set(), csp: [], bad: [] };
     if (!opts.sw) await page.setBypassServiceWorker(true);
     await page.setRequestInterception(true);
@@ -46,12 +46,29 @@ async function test(name, fn) { try { await fn(); results++; console.log('  ok  
     return page;
   }
   const calc = page => page.waitForFunction(() => !document.getElementById('res').hidden && !document.querySelector('#res .spin'), { timeout: 30000 });
+  /* On a loaded machine the suggestion list sometimes does not open after typing (cause not investigated), so typing is retried
+     (3 attempts, 4 s each); a real autocomplete bug still fails, after the last attempt */
   const pickWithKeyboard = async (page, sel, text) => {
-    await page.focus(sel); await page.$eval(sel, e => { e.value = ''; }); await page.keyboard.type(text);
-    await page.waitForSelector('#acbox:not([hidden])'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+    for (let attempt = 1; ; attempt++) {
+      await page.focus(sel); await page.$eval(sel, e => { e.value = ''; }); await page.keyboard.type(text);
+      try { await page.waitForSelector('#acbox:not([hidden])', { timeout: 4000 }); break; } catch (e) { if (attempt === 3) throw e; }
+    }
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
   };
 
   console.log('e2e in ' + chrome + ' (v' + VERSION + ')');
+  /* Layout needs no keyboard or clipboard, so its 10 pages are opened together and the test runs alongside the others, in a Chrome of its own:
+     pages opened or closed in the same browser take the focus away from the page that is typing */
+  const layoutBrowser = await puppeteer.launch({ executablePath: chrome, headless: 'new', args: ['--no-sandbox', '--disable-gpu', '--lang=en-US'] });
+  const layout = test('layout: no horizontal scroll, header text never overlaps the pictures', async () => {
+    /* the fonts are not loaded here, so the text is drawn with the system fallback; the wider pass (letter-spacing) stands in
+       for a wider real font, which is how an overlap at 1000-1100px slipped through once */
+    await Promise.all([[360, 0], [390, 0], [640, 0], [760, 0], [940, 0], [1000, 2], [1100, 0], [1100, 2], [1366, 0], [1366, 2]].map(async ([w, ls]) => {
+      const p = await open(w, 900, { browser: layoutBrowser }); await p.goto2(); if (ls) await p.addStyleTag({ content: `.top-in *{letter-spacing:${ls}px}` }); await p.waitForFunction(() => document.querySelectorAll('.ha').length > 0); await new Promise(r => setTimeout(r, 400));
+      const m = await p.evaluate(() => { const vis = [...document.querySelectorAll('.ha')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.getBoundingClientRect()), t = document.querySelector('.top-in').getBoundingClientRect(); return { sw: document.documentElement.scrollWidth, iw: innerWidth, over: vis.filter(r => r.left < t.right - 2 && r.right > t.left + 2 && r.top < t.bottom && r.bottom > t.top).length }; });
+      assert(m.sw <= m.iw + 1, `horizontal scroll at ${w}px (${m.sw} > ${m.iw})`); assert.strictEqual(m.over, 0, `header art overlaps the text at ${w}px (letter-spacing ${ls}px)`); await p.close();
+    }));
+  }).finally(() => layoutBrowser.close());
   await test('boot: default Pokémon, no errors, no CSP violation, only allowed hosts', async () => {
     const p = await open(); await p.goto2();
     const s = await p.evaluate(() => ({ mon: mSp.value, ab: mAb.value, show: !!document.querySelector('#showcase .sc-name'), ver: document.querySelector('.ver').textContent, csp: window.__csp, title: document.title }));
@@ -110,15 +127,6 @@ async function test(name, fn) { try { await fn(); results++; console.log('  ok  
     q.on('dialog', d => d.accept()); await q.click('#resetBtn'); await new Promise(r => setTimeout(r, 300));
     assert.strictEqual(await q.evaluate(() => document.querySelectorAll('.gc').length), 0); await p.close(); await q.close();
   });
-  await test('layout: no horizontal scroll, header text never overlaps the pictures', async () => {
-    /* the fonts are not loaded here, so the text is drawn with the system fallback; the wider pass (letter-spacing) stands in
-       for a wider real font, which is how an overlap at 1000-1100px slipped through once */
-    for (const [w, ls] of [[360, 0], [390, 0], [640, 0], [760, 0], [940, 0], [1000, 2], [1100, 0], [1100, 2], [1366, 0], [1366, 2]]) {
-      const p = await open(w, 900); await p.goto2(); if (ls) await p.addStyleTag({ content: `.top-in *{letter-spacing:${ls}px}` }); await p.waitForFunction(() => document.querySelectorAll('.ha').length > 0); await new Promise(r => setTimeout(r, 400));
-      const m = await p.evaluate(() => { const vis = [...document.querySelectorAll('.ha')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.getBoundingClientRect()), t = document.querySelector('.top-in').getBoundingClientRect(); return { sw: document.documentElement.scrollWidth, iw: innerWidth, over: vis.filter(r => r.left < t.right - 2 && r.right > t.left + 2 && r.top < t.bottom && r.bottom > t.top).length }; });
-      assert(m.sw <= m.iw + 1, `horizontal scroll at ${w}px (${m.sw} > ${m.iw})`); assert.strictEqual(m.over, 0, `header art overlaps the text at ${w}px (letter-spacing ${ls}px)`); await p.close();
-    }
-  });
   await test('accessibility: every field and button has a name; tokens have contrast', async () => {
     const p = await open(); await p.goto2();
     await p.click('#addSurv'); await p.click('#addKo'); await p.click('#addSpd'); await p.evaluate(() => document.querySelectorAll('details').forEach(d => d.open = true));
@@ -164,6 +172,7 @@ async function test(name, fn) { try { await fn(); results++; console.log('  ok  
     await p.setOfflineMode(true); await p.reload({ waitUntil: 'load' }).catch(() => {});
     assert(/EVSmith/.test(await p.title()) && await p.evaluate(() => !!document.getElementById('go')), 'page must load offline'); await p.setOfflineMode(false); await p.close();
   });
+  await layout;
   await browser.close(); server.close();
   console.log(failures.length ? `\ne2e: ${failures.length} FAILED (${failures.join('; ')})` : `\ne2e: ${results} checks passed`);
   process.exit(failures.length ? 1 : 0);

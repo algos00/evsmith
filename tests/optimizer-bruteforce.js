@@ -39,15 +39,27 @@ function bruteNature(M, goals, n) {
   const survs = goals.filter(g => g.t === 'surv'), kos = goals.filter(g => g.t === 'ko'), spds = goals.filter(g => g.t === 'spd');
   const tableFor = (g, atk) => {
     const mv = MV[g.mv], defK = (mv.category === 'Physical' || mv.dealsPhysicalDamage) ? 'df' : 'sd', att = { opp: S.oppCfg(g), move: g.mv, crit: false, hits: 0, g, fo: FIELD0 }, t = [];
-    for (let h = 0; h <= 32; h++) { t.push([]); for (let x = 0; x <= 32; x++) { const sp = { hp: h }; sp[defK] = x; if (atk != null) sp.at = atk; t[h].push(S.gp(M, sp, n, { atts: [att] }) >= +g.thr - 1e-9); } }
+    /* The damage rolls do not depend on the HP points (only the threshold does), so they are computed once per defensive
+       value instead of once per (HP, defensive) pair: 33 engine calls instead of 1089. To keep the search exhaustive, every
+       value is also computed at 0 and 32 HP points and the two must agree. */
+    const spFor = (h, x) => { const sp = { hp: h }; sp[defK] = x; if (atk != null) sp.at = atk; return sp; };
+    const lists = [];
+    for (let x = 0; x <= 32; x++) {
+      const a = S.sv(M, spFor(0, x), n, att).lists, b = S.sv(M, spFor(32, x), n, att).lists;
+      if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`damage depends on HP points (${M.name} ${n} ${g.mv} ${defK}=${x})`);
+      lists.push(a);
+    }
+    for (let h = 0; h <= 32; h++) { const hp = S.mkMe(M, { hp: h }, n).maxHP; t.push(lists.map(L => S.conv(L, hp, true) >= +g.thr - 1e-9)); }
     return { defK, t };
   };
   const costMap = tabs => {
-    const m = new Map();
-    for (let h = 0; h <= 32; h++) for (let d = 0; d <= 32; d++) for (let s = 0; s <= 32; s++) {
-      let mask = 0; tabs.forEach((x, i) => { if (x.t[h][x.defK === 'df' ? d : s]) mask |= 1 << i; });
-      const c = h + d + s; if (!m.has(mask) || m.get(mask) > c) m.set(mask, c);
+    /* cheapest (HP + Def + SpD) for every set of Survive goals met; the mask of a Def goal depends on (HP, Def) and that of a SpD goal on (HP, SpD) */
+    const best = new Int32Array(1 << tabs.length).fill(1e9), dm = new Int32Array(33), sm = new Int32Array(33);
+    for (let h = 0; h <= 32; h++) {
+      for (let v = 0; v <= 32; v++) { dm[v] = 0; sm[v] = 0; tabs.forEach((x, i) => { if (x.t[h][v]) (x.defK === 'df' ? dm : sm)[v] |= 1 << i; }); }
+      for (let d = 0; d <= 32; d++) for (let s = 0; s <= 32; s++) { const mask = dm[d] | sm[s], c = h + d + s; if (c < best[mask]) best[mask] = c; }
     }
+    const m = new Map(); best.forEach((c, mask) => { if (c < 1e9) m.set(mask, c); });
     return m;
   };
   const hasFP = survs.some(g => g.mv === 'Foul Play');
