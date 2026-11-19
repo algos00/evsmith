@@ -1,6 +1,6 @@
 {
   "name": "evsmith",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "license": "MIT",
   "description": "EVSmith: Stat Point spread optimizer for Pokémon Champions (VGC). Ships as the single file dist/EVSmith.html.",

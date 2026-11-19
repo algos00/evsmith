@@ -195,7 +195,7 @@ textarea{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--
 @media (min-width:1200px){.hero-art{min-width:590px}}
 /* 3D hero (only when the page is served over http/https and WebGL works: <html class="has-stage">, set by the loader in template.html) */
 .stage{display:none}
-.has-stage .stage{display:flex;position:relative;box-sizing:border-box;min-height:100vh;min-height:100svh;align-items:center;overflow:hidden}
+.has-stage .stage{display:flex;position:relative;box-sizing:border-box;min-height:100vh;min-height:100dvh;align-items:center;overflow:hidden}
 .has-stage .top{display:none}
 .stage-in{position:relative;z-index:2;box-sizing:border-box;width:min(100%,1240px);margin:0 auto;padding:28px 14px;pointer-events:none}
 .stage-in>*{pointer-events:auto}
@@ -215,7 +215,7 @@ textarea{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--
 @media (max-width:799px){
 .has-stage .stage{flex-direction:column;align-items:stretch;justify-content:flex-start}
 .stage-in{padding-top:36px}
-.stage-3d{position:relative;flex:1 1 auto;min-height:52svh;width:100%}
+.stage-3d{position:relative;flex:1 1 auto;min-height:52dvh;width:100%}
 .stage-hint{bottom:12px}
 }
 @media (min-width:800px){

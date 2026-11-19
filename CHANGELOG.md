@@ -2,6 +2,10 @@
 
 All notable changes to EVSmith. Versions follow the Git tags (`vX.Y.Z`).
 
+## 1.4.1
+
+- 3D hero: the model is smaller so it no longer overflows, and the hero uses `dvh` so it fits Safari's moving toolbar.
+
 ## 1.4.0
 
 - 3D hero: a full-screen, draggable (mouse, touch, arrow keys) Garchomp model at the top of the page when it is served from GitHub Pages and WebGL works; otherwise the normal header stays.

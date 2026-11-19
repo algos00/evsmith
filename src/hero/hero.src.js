@@ -50,8 +50,8 @@ export async function mount(host, opts) {
 
   function fit() {
     const t = Math.tan(MathUtils.degToRad(FOV / 2));
-    const dV = (height * 0.56) / t;                                  // the model fills about 112% of the height... of its half
-    const dH = (radius * 1.15) / (t * camera.aspect);
+    const dV = (height * 0.7) / t;                                   // vertical margin of 40%: nothing is cut at the top or bottom
+    const dH = (radius * 1.45) / (t * camera.aspect);                // horizontal margin for the claws and tail while it turns
     const d = Math.max(dV, dH);
     camera.position.set(0, height * 0.04, d);
     camera.lookAt(0, 0, 0);
