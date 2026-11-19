@@ -1,8 +1,7 @@
 'use strict';
 /* Runs the checks in parallel, one process each, against ../dist/EVSmith.html (or EVSMITH_HTML=path).
    node run-all.js          quick set for development (a few seconds)
-   node run-all.js --full   everything, as before a release and in CI: more random cases, two seeds, and the
-                            end-to-end checks in Chrome
+   node run-all.js --full   everything, as before a release and in CI: more random cases and two seeds
    Exit code 0 only if every check passes. A failing check prints its full output; rerun that file alone with the
    same arguments to reproduce it. */
 const { spawn } = require('child_process'), os = require('os');
@@ -44,7 +43,6 @@ const workers = CORES, queue = steps.slice(), results = [];
 const worker = async () => { for (let s; (s = queue.shift());) results.push(await run(s)); };
 Promise.all(Array.from({ length: workers }, worker)).then(async () => {
   const parallelMs = Date.now() - t0, rs = results.slice();
-  if (full) rs.push(await run(['end-to-end in Chrome', ['e2e.js']]));
   for (const r of rs) {
     const last = r.out.trim().split('\n').filter(l => /^\S/.test(l)).pop() || '';
     console.log(`${r.code === 0 ? ' ok ' : 'FAIL'}  ${r.name}  (${(r.ms / 1000).toFixed(1)} s)  ${r.code === 0 ? last : ''}`);

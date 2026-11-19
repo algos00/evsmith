@@ -4,8 +4,7 @@ Regression tests for the built page, `../dist/EVSmith.html`. Nothing here ships 
 
     npm install
     npm test                       # quick set, all files in parallel (about 3.5 s on 12 cores)
-    npm run test:full              # everything, end-to-end in Chrome included (about 35 s on 12 cores)
-    npm run test:e2e               # only the end-to-end checks
+    npm run test:full              # everything: more random cases, two seeds (about 15 s on 12 cores)
     npm run test:engine            # damage engine vs @smogon/calc (pinned to 0.12.0)
     npm run test:optimizer         # optimizer vs exhaustive search
     EVSMITH_HTML=/path/to/other.html npm test
@@ -22,7 +21,6 @@ Regression tests for the built page, `../dist/EVSmith.html`. Nothing here ships 
 * `app-logic.js` tests the pure functions of the interface: saved state, share link and Showdown export.
 * `contrast.js` checks the WCAG contrast of the colour tokens, light and dark.
 * `i18n.js` checks that every interface text has an Italian translation with the same placeholders and HTML tags, and that no translation is unused.
-* `e2e.js` drives the built page in a real Chrome (puppeteer-core; `CHROME_PATH` or a normal install) on a local server with no network: keyboard use, full calculation, import, share link, layout at 10 widths, accessibility names, Italian interface, offline mode.
 
 The quick set uses fewer random cases and one seed, and leaves out the "every nature" optimizer scenarios and the end-to-end checks.
 
@@ -34,3 +32,5 @@ checks that it does not depend on the HP points (it fails with "damage depends o
 Timings and the history of what was sped up are in `../AGENTS.md`.
 
 If a test fails, `run-all.js` prints the exact command: rerun that file alone with the same arguments to reproduce the case.
+
+There are no browser (end-to-end) tests: they were removed on 2026-11-19 as not worth their time. Layout, accessibility names, the Italian interface in the real page and the 3D hero are therefore checked by hand.

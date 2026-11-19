@@ -27,7 +27,7 @@ A usage guide is built into the page ("How to use EVSmith").
 
 ## How it is checked
 
-The damage engine is compared with [`@smogon/calc`](https://github.com/smogon/damage-calc) on random cases, and the optimizer with an exhaustive search; the page itself is exercised in a real Chrome. See [`tests/README.md`](tests/README.md). Results are still estimates for planning: always test a spread in battle.
+The damage engine is compared with [`@smogon/calc`](https://github.com/smogon/damage-calc) on random cases, and the optimizer with an exhaustive search; the page itself is not covered by automatic browser tests. See [`tests/README.md`](tests/README.md). Results are still estimates for planning: always test a spread in battle.
 
 ## Develop
 
@@ -37,7 +37,7 @@ Requires Node.js 20 or newer.
 npm ci --prefix tests     # test dependencies (once)
 npm run build             # writes dist/EVSmith.html
 npm test                  # build + quick checks (a few seconds): use it while developing
-npm run test:full         # build + every check, end-to-end in Chrome included (about 35 s on 12 cores)
+npm run test:full         # build + every check (about 15 s on 12 cores)
 ```
 
 Edit the files in `src/`, never `dist/`. How the code is organized, how to refresh the data, the test details and the release procedure are in [`AGENTS.md`](AGENTS.md). Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).

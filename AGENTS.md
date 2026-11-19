@@ -18,7 +18,7 @@ points. Everything runs in the browser; there is no server and no tracking.
   exception is the 3D hero model `src/hero/garchomp.glb` (CC BY 4.0, by Icefer547 on Sketchfab, textures reduced to 1024 px WebP):
   keep its credit in the footer (`template.html`) and in the README, and say so if the model changes.
 - No runtime dependencies in the app. Node >= 20 is only needed to build and test. Test dependencies live in `tests/`
-  (`@smogon/calc` pinned to 0.12.0, `puppeteer-core`). `tools/` has its own dependencies (`three`, `esbuild`) used only to
+  (`@smogon/calc` pinned to 0.12.0). `tools/` has its own dependencies (`three`, `esbuild`) used only to
   bundle the 3D hero; the bundle `src/hero/hero.js` is committed, so building and CI never need them.
 
 ## Conventions
@@ -54,7 +54,7 @@ points. Everything runs in the browser; there is no server and no tracking.
 
 ### Things that break quietly
 
-- **The 3D hero** exists only over http/https (the loader in `template.html` adds `<html class="has-stage">`); from `file://`, without WebGL, on a lost context or if `hero/` fails to load, the class is removed and the old header (`.top`) shows. Both headers carry the same logo/h1/tagline, so edit both. After changing `hero.src.js` run `npm install --prefix tools && node tools/build-hero.js` and commit `hero.js`. The e2e blocks `/hero/` in every page except the "3D hero" test, because software WebGL made the others several times slower. Not tested: the hero offline (the service worker caches it only after a first view) and real-GPU or Safari/Firefox rendering.
+- **The 3D hero** exists only over http/https (the loader in `template.html` adds `<html class="has-stage">`); from `file://`, without WebGL, on a lost context or if `hero/` fails to load, the class is removed and the old header (`.top`) shows. Both headers carry the same logo/h1/tagline, so edit both. After changing `hero.src.js` run `npm install --prefix tools && node tools/build-hero.js` and commit `hero.js`. Nothing tests the hero automatically (the e2e test for it was removed with the rest). It was checked by hand only in Chrome with software WebGL; not checked: offline (the service worker caches it only after a first view), real GPU, Safari and Firefox. If it fails to load, the header briefly shows the hero layout before falling back.
 
 - **Content-Security-Policy.** `build.js` hashes every inline `<script>` and writes the CSP. `connect-src 'self' blob:`, `script-src` has `'self'` for the hero module, images only
   from `'self'`, `data:`, `blob:` and `raw.githubusercontent.com` (`blob:` is what the glTF loader needs for the model's WebP textures), fonts only from Google Fonts. A new external resource or network
@@ -77,20 +77,20 @@ points. Everything runs in the browser; there is no server and no tracking.
 npm ci --prefix tests     # test dependencies, once
 npm run build             # writes dist/
 npm test                  # build + quick checks (use while developing)
-npm run test:full         # build + everything, end-to-end in Chrome included (before a release; CI runs this)
+npm run test:full         # build + everything (before a release; CI runs this)
 npm run update-meta       # refresh src/tdata.js (about 11 minutes, network)
 npm run update-sprites    # refresh src/sprites.js (one request)
 ```
 
 Single checks, from `tests/`: `node compare-smogon.js [seed] [cases]`, `node optimizer-bruteforce.js [seed] [scenarios]
 [autoNatureScenarios] [k/n]`, `node situational.js`, `node features.js`, `node app-logic.js`, `node contrast.js`,
-`node i18n.js`, `node e2e.js`. A failing check in `run-all.js` prints the exact command to reproduce it. `EVSMITH_HTML=path`
-tests another build; `CHROME_PATH` selects Chrome for the e2e (without Chrome it is skipped locally and fails in CI).
+`node i18n.js`. A failing check in `run-all.js` prints the exact command to reproduce it. `EVSMITH_HTML=path`
+tests another build.
 
 ### What to run when
 
-- Changed text, CSS or markup only: `npm test` (the layout check is in the e2e, so run `npm run test:full` if you touched the
-  header or any layout).
+- Changed text, CSS or markup only: `npm test`, then look at the page yourself (there are no browser tests: layout, the header
+  at 1000-1199 px, the Italian interface and the 3D hero are checked by hand).
 - Changed `engine.js`, `ui.js` optimizer code or data: `npm run test:full`.
 - Before tagging a release: `npm run test:full`, no exceptions (see Release).
 
@@ -98,8 +98,9 @@ tests another build; `CHROME_PATH` selects Chrome for the e2e (without Chrome it
 
 What each check does is in `tests/README.md`. In short: the damage engine and the situational abilities are compared with
 `@smogon/calc` on random cases; the optimizer is compared with an exhaustive search; `features`, `app-logic`, `contrast`,
-`i18n` cover the rest; `e2e` drives the built page in real Chrome (keyboard use, calculation, import, share link, layout at
-10 widths, accessibility names, Italian interface, offline mode).
+`i18n` cover the rest. There are **no browser (end-to-end) tests**: `tests/e2e.js` was removed on 2026-11-19 at the
+maintainer's request (too slow for what it gave). It covered keyboard use, a full calculation, import, share link, layout at 10
+widths, accessibility names, the Italian interface and offline mode; those are now checked by hand.
 
 Timings on the maintainer's machine (12 logical cores, shared with other work, so they vary by 10-20%):
 
@@ -107,6 +108,7 @@ Timings on the maintainer's machine (12 logical cores, shared with other work, s
 |---|---|---|---|
 | 2026-11-19 | before the speed-up | 4.7 s | 79.3 s (parallel part 56.5 s + e2e 22.7 s) |
 | 2026-11-19 | after the speed-up | 3.4-3.9 s | 32-37 s (parallel part about 15.5 s + e2e 16-20 s) |
+| 2026-11-19 | e2e removed | 3.4-3.9 s | about 15 s (parallel part only) |
 
 The CPU time of the full run went from about 560 s to about 155 s. What changed:
 
@@ -116,14 +118,9 @@ The CPU time of the full run went from about 560 s to about 155 s. What changed:
   "every nature" and Foul Play scenarios (the old long pole, 20-55 s each) take 4-5 s.
 - `run-all.js`: a work queue of processes (slowest checks first) instead of one fixed shard per process, with a number of
   optimizer parts tied to the core count (more only adds start-up time: each process loads the app).
-- `e2e.js`: the layout test opens its 10 widths in parallel in a second Chrome, so it overlaps the other e2e checks.
 
 Notes learned while doing it:
 
-- The e2e runs **after** the parallel checks on purpose. Run alongside them (even with 2 cores kept free) about 1 run in 5
-  failed with "Waiting for selector `#acbox:not([hidden])` failed" (the suggestion list did not open after typing; the cause was
-  not investigated). `pickWithKeyboard` retries typing up to 3 times as protection. Do not run several e2e at once, and do not put
-  layout (or other tests that open/close pages) in the same Chrome as the keyboard tests.
 - What is left in the optimizer test is mostly the app's own solver (`mS`, `conv`, `nm` in the profile), not the test code.
   Speeding up the solver would speed up both the app and the tests; it is product code, so it needs its own decision.
 - The tolerated numbers of unexplained engine differences (0.05% of cases) and the "expected Champions-data differences"
@@ -147,7 +144,7 @@ A release is a version tag. Pushing the tag builds, tests, publishes the GitHub 
 
 1. Make sure `main` has everything you want and the working tree is clean.
 2. Run `npm run test:full` **locally** and see it pass. The quick set does not include the end-to-end checks; the first 1.3.0 run
-   failed in CI on the e2e layout check (a header overlap), which only the full set runs.
+   failed in CI on a layout check (a header overlap) that was then still in the e2e set; that set no longer exists, so look at the page.
 3. Choose the version (semantic: fixes `X.Y.Z+1`, features `X.Y+1.0`). Set `version` in `package.json` and add a section to
    `CHANGELOG.md` (user-visible changes; the changelog does not list test or tooling work unless it matters to users).
 4. Commit as `Release X.Y.Z` and push `main`. Wait for the *Test* workflow on that commit to be green
