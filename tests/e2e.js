@@ -17,7 +17,7 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' }); fs.createReadStream(file).pipe(res);
 });
 let results = 0; const failures = [];
-async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.now() - t0) / 1000).toFixed(1)} s)`; try { await fn(); results++; console.log('  ok  ' + name + ms()); } catch (e) { failures.push(name); console.log('  FAIL ' + name + ms() + '\n       ' + String(e.message).split('\n').slice(0, 4).join(' / ').slice(0, 600)); } }
+async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.now() - t0) / 1000).toFixed(1)} s)`; try { await fn(); results++; console.log('  ok  ' + name + ms()); } catch (e) { failures.push(name); console.log('  FAIL ' + name + ms() + '\n       ' + String(e.message).split('\n').slice(0, 14).join(' / ').slice(0, 1500)); } }
 
 (async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -44,7 +44,9 @@ async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.no
     page.on('pageerror', e => log.errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) log.errors.push(m.text()); });
     await page.evaluateOnNewDocument(() => { window.__csp = []; document.addEventListener('securitypolicyviolation', e => window.__csp.push(e.violatedDirective + ' ' + e.blockedURI)); try { if (!sessionStorage.getItem('__keep')) { localStorage.clear(); sessionStorage.setItem('__keep', '1'); } } catch (e) {} });
-    page.log = log; page.goto2 = async (u) => { await page.goto(u || base, { waitUntil: 'load' }); await page.waitForFunction(() => document.getElementById('mSp') && document.getElementById('mSp').value !== ''); };
+    page.log = log; page.goto2 = async (u) => { await page.goto(u || base, { waitUntil: 'load' }); await page.waitForFunction(() => document.getElementById('mSp') && document.getElementById('mSp').value !== '');
+      /* with /hero/ blocked the loader first adds has-stage and removes it when the import fails: wait for that, or a click can land during the layout change */
+      if (!opts.hero) await page.waitForFunction(() => !document.documentElement.classList.contains('has-stage')); };
     return page;
   }
   const calc = page => page.waitForFunction(() => !document.getElementById('res').hidden && !document.querySelector('#res .spin'), { timeout: 30000 });
@@ -154,7 +156,7 @@ async function test(name, fn) { const t0 = Date.now(), ms = () => ` (${((Date.no
     assert.strictEqual(s.go, 'Trova lo spread migliore');
     await p.click('#go'); await calc(p);
     const r = await p.$eval('#res', e => e.innerText); assert(/Rillaboom Wood Hammer/.test(r) && /Flare Blitz su Sneasler/.test(r) && /Altre nature/.test(r), 'labels of a new calculation are Italian: ' + r.replace(/\n/g, ' | ').slice(-900));
-    await p.reload({ waitUntil: 'load' }); await p.waitForFunction(() => mSp.value !== '');
+    await p.reload({ waitUntil: 'load' }); await p.waitForFunction(() => mSp.value !== ''); await p.waitForFunction(() => !document.documentElement.classList.contains('has-stage'));
     assert.strictEqual(await p.evaluate(() => document.documentElement.lang + '|' + go.textContent), 'it|Trova lo spread migliore', 'language choice must survive a reload');
     await p.click('#langBtn');
     const e = await p.evaluate(() => ({ lang: document.documentElement.lang, go: go.textContent, h: document.querySelector('#guide summary').textContent, st: mSt.selectedOptions[0].textContent }));
