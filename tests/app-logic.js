@@ -34,15 +34,24 @@ var THR=[];for(var q=16;q>=1;q--)THR.push([String(q/16),q===16?'100% (always)':(
 ${fn('newGoal')}
 ${ui.slice(dispStart, dispEnd)}
 ${ui.slice(pureStart, pureEnd)}
-globalThis.T={parseShowdownSet:parseShowdownSet,btnColors:btnColors,contrastOf:contrastOf,spriteUrls:spriteUrls,typeChips:typeChips,spriteImg:spriteImg,radar:radar,TYC:TYC,tyInk:tyInk,SPRITE_HOST:SPRITE_HOST,cleanState:cleanState,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
+${stmt('var META_BY=')}
+${stmt('var META_MAX=')}
+${stmt('var TOP=')}
+${fn('itemLocked')}
+${fn('soleAb')}
+${fn('metaSet')}
+${fn('dmgMoves')}
+var goals=[],UIV={};var $i=function(id){return UIV[id]||{checked:false,value:''}};
+${fn('metaGoals')}
+globalThis.T={metaGoals:metaGoals,setUi:function(o){UIV={};Object.keys(o).forEach(function(k){UIV[k]=typeof o[k]==='boolean'?{checked:o[k],value:''}:{checked:false,value:o[k]}})},setGoals:function(g){goals=g},parseShowdownSet:parseShowdownSet,btnColors:btnColors,contrastOf:contrastOf,spriteUrls:spriteUrls,typeChips:typeChips,spriteImg:spriteImg,radar:radar,TYC:TYC,tyInk:tyInk,SPRITE_HOST:SPRITE_HOST,cleanState:cleanState,blocksOf:blocksOf,moveBlock:moveBlock,blockIndex:blockIndex,ranked:ranked,cleanGoal:cleanGoal,encodeShare:encodeShare,decodeShare:decodeShare,showdownSet:showdownSet,newGoal:newGoal};`;
 ctx.btoa = btoa; ctx.atob = atob; ctx.escape = escape; ctx.unescape = unescape; ctx.encodeURIComponent = encodeURIComponent; ctx.decodeURIComponent = decodeURIComponent;
 vm.runInContext(code, ctx);
 const T = ctx.T;
-let n = 0; const ok = (name, f) => { f(); n++; };
+let n = 0; const pending = []; const ok = (name, f) => { const r = f(); if (r && r.then) pending.push(r.then(() => { n++; })); else n++; };
 
 const sample = () => {
   const g1 = T.newGoal('surv'); Object.assign(g1, { sp: 'Rillaboom', mv: 'Wood Hammer', spA: 32, ab: 'Grassy Surge', it: 'Miracle Seed', na: 'Adamant', thr: '0.5', w: '1000', f: { weather: 'Sun', terrain: 'Grassy', tailwindR: true } });
-  const g2 = T.newGoal('ko'); Object.assign(g2, { sp: 'Archaludon', mv: 'Flare Blitz', pct: 50, hh: true, crit: true, bo: -2, mbo: 1 });
+  const g2 = T.newGoal('ko'); Object.assign(g2, { sp: 'Archaludon', mv: 'Flare Blitz', pct: 50, crit: true, bo: -2, mbo: 1 });
   const g3 = T.newGoal('spd'); Object.assign(g3, { sp: 'Sneasler', spe: 20, mode: 'under' });
   return { v: 1, m: { sp: 'Incineroar', ab: 'Intimidate', it: 'Sitrus Berry', na: '*', st: 'Healthy', fm: 'bulk', lk: { hp: '', at: 10, df: '', sa: '', sd: '', sp: 0 } },
     t: { on: true, spd: false, n: '12', m: '2', nat: 'off', we: 'auto', te: '', b: '24' }, g: [g1, g2, g3] };
@@ -52,6 +61,62 @@ ok('round trip', () => {
   const st = ctx.T.cleanState(sample()), back = T.decodeShare(T.encodeShare(st));
   assert.deepStrictEqual(JSON.parse(JSON.stringify(back)), JSON.parse(JSON.stringify(st)));
   assert.strictEqual(back.g.length, 3); assert.strictEqual(back.g[0].f.tailwindR, true); assert.strictEqual(back.g[1].pct, 50);
+});
+ok('defence boosts survive a round trip and are clamped', () => {
+  const g = T.newGoal('surv'); Object.assign(g, { sp: 'Sneasler', mv: 'Dire Claw', db: 2, sb: -1 });
+  const st = ctx.T.cleanState({ v: 1, m: {}, t: {}, g: [g] }), back = T.decodeShare(T.encodeShare(st));
+  assert.strictEqual(back.g[0].db, 2); assert.strictEqual(back.g[0].sb, -1);
+  g.db = 99; assert.strictEqual(ctx.T.cleanState({ v: 1, m: {}, t: {}, g: [g] }).g[0].db, 6);
+});
+ok('old KO goals with hh:true become Helping Hand in the field', () => {
+  const g = T.newGoal('ko'); Object.assign(g, { sp: 'Archaludon', mv: 'Flare Blitz', hh: true });
+  const c = ctx.T.cleanState({ v: 1, m: {}, t: {}, g: [g] }).g[0];
+  assert.strictEqual(c.f.helpingHandL, true); assert.strictEqual(c.hh, undefined);
+});
+ok('goal order: blocks, moves and old saves', () => {
+  const mk = (t, join, w, tag) => Object.assign(T.newGoal(t), { sp: 'Garchomp', mv: 'Earthquake', join, w, tag });
+  const g = [mk('surv', false, '1', 'a'), mk('surv', true, '1', 'a2'), mk('ko', false, '1000', 'b'), mk('spd', false, '10', 'c')];
+  assert.strictEqual(T.blocksOf(g).length, 3); assert.strictEqual(T.blockIndex(g, 1), 0); assert.strictEqual(T.blockIndex(g, 2), 1);
+  const tags = a => a.map(x => x.tag).join();
+  assert.strictEqual(tags(T.moveBlock(g.slice(), 0, 1)), 'b,a,a2,c', 'a joined pair moves as one');
+  assert.strictEqual(tags(T.moveBlock(g.slice(), 3, 0)), 'c,a,a2,b'); assert.strictEqual(tags(T.moveBlock(g.slice(), 2, -5)), 'b,a,a2,c');
+  assert.strictEqual(tags(T.moveBlock(g.slice(), 0, 99)), 'b,c,a,a2');
+  const old = ctx.T.cleanState({ v: 1, m: {}, t: {}, g: g.map(x => Object.assign({}, x)) });
+  assert.strictEqual(old.g.map(x => x.sp).length, 4); assert.strictEqual(old.o, 2);
+  assert.strictEqual(old.g.map(x => x.t).join(), 'ko,spd,surv,surv', 'old saves: Required first, then Important, then Nice to have');
+  const cur = ctx.T.cleanState({ v: 1, o: 2, m: {}, t: {}, g: g.map(x => Object.assign({}, x)) });
+  assert.strictEqual(cur.g.map(x => x.t).join(), 'surv,surv,ko,spd', 'new saves keep their order');
+  assert.strictEqual(T.ranked(g).map(x => x.w).join(), '4,3,2,1');
+});
+ok('tournament meta KO goals (the real metaGoals code)', () => {
+  const ko = (mv) => Object.assign(T.newGoal('ko'), { sp: 'Incineroar', mv });
+  T.setGoals([ko('Moonblast'), ko('Psyshock'), ko('Moonblast'), ko('Light of Ruin'), ko('Dazzling Gleam')]);
+  T.setUi({ tmOn: false, tmSpd: false, tmKo: true, tmN: '5', tmM: '2', tmNat: 'off', tmWe: 'auto', tmTe: 'auto', tmKb: '16', tmKt: '0.5', tmKp: '75' });
+  const g = T.metaGoals(), mvs = [...new Set(g.map(x => x.mv))];
+  assert.strictEqual(mvs.join(), 'Moonblast,Psyshock,Light of Ruin', 'distinct moves of the KO goals, at most three');
+  assert.strictEqual(g.length, 15); assert(g.every(x => x.t === 'ko' && x.meta && x.hp === 32 && x.pct === 75 && x.thr === '0.5' && !x.f.helpingHandL && x.mbo === 0));
+  const sd = g.filter(x => x.mv === 'Moonblast'), df = g.filter(x => x.mv === 'Psyshock');
+  assert(sd.every(x => x.sd === 16 && x.df === 0), 'special move: bulk goes to SpD'); assert(df.every(x => x.df === 16 && x.sd === 0), 'Psyshock hits Def: bulk goes to Def');
+  T.setGoals([]); assert.strictEqual(T.metaGoals().length, 0, 'no KO goal, no KO meta');
+  T.setUi({ tmOn: false, tmSpd: true, tmKo: false, tmN: '5', tmM: '2', tmNat: 'off', tmWe: 'auto', tmTe: 'auto', tmKb: '16', tmKt: '1', tmKp: '50' });
+  assert(T.metaGoals().every(x => x.t === 'spd'), 'other options still work');
+});
+ok('the Mega Floette link from the issue: Perfect spread keeps Recovery and beats the old spreads', () => {
+  const tok = 'eyJ2IjoxLCJtIjp7InNwIjoiTWVnYSBGbG9ldHRlIiwiYWIiOiJGYWlyeSBBdXJhIiwiaXQiOiIiLCJuYSI6Ik1vZGVzdCIsInN0IjoiSGVhbHRoeSIsImZtIjoib2ZmZW5zZSIsImFiT24iOmZhbHNlLCJmYWludGVkIjowLCJobyI6WyJyZWNvdmVyeSJdLCJsayI6eyJocCI6IiIsImF0IjoiIiwiZGYiOiIiLCJzYSI6IiIsInNkIjoiIiwic3AiOiIifX0sInQiOnsib24iOmZhbHNlLCJzcGQiOmZhbHNlLCJuIjoiMTIiLCJtIjoiMiIsIm5hdCI6Im9mZiIsIndlIjoiYXV0byIsInRlIjoiYXV0byIsImIiOiIyNCJ9LCJnIjpbeyJmIjp7IndlYXRoZXIiOiJhdXRvIiwidGVycmFpbiI6ImF1dG8ifSwidCI6InN1cnYiLCJzcCI6IlNuZWFzbGVyIiwiYWIiOiJVbmJ1cmRlbiIsIml0IjoiV2hpdGUgSGVyYiIsIm5hIjoiQWRhbWFudCIsInN0IjoiSGVhbHRoeSIsIm12IjoiRGlyZSBDbGF3Iiwic3BBIjozMiwiaHAiOjAsImRmIjowLCJzZCI6MCwic3BlIjowLCJibyI6MCwibWJvIjowLCJ0aHIiOiIxIiwidyI6IjEwIiwiam9pbiI6ZmFsc2UsIm1vZGUiOiJvdmVyIiwicGN0IjoxMDAsInNldCI6IiIsImNyaXQiOmZhbHNlLCJoaXRzIjowLCJoaCI6ZmFsc2UsImFiT24iOmZhbHNlLCJmYWludGVkIjowfSx7ImYiOnsid2VhdGhlciI6ImF1dG8iLCJ0ZXJyYWluIjoiYXV0byIsImhlbHBpbmdIYW5kTCI6dHJ1ZX0sInQiOiJrbyIsInNwIjoiSW5jaW5lcm9hciIsImFiIjoiSW50aW1pZGF0ZSIsIml0IjoiU2l0cnVzIEJlcnJ5IiwibmEiOiJDYXJlZnVsIiwic3QiOiJIZWFsdGh5IiwibXYiOiJNb29uYmxhc3QiLCJzcEEiOjMyLCJocCI6MzIsImRmIjowLCJzZCI6MjAsInNwZSI6MCwiYm8iOjAsIm1ibyI6MSwidGhyIjoiMSIsInciOiIxMCIsImpvaW4iOmZhbHNlLCJtb2RlIjoib3ZlciIsInBjdCI6MTAwLCJzZXQiOiIiLCJjcml0IjpmYWxzZSwiaGl0cyI6MCwiaGgiOmZhbHNlLCJhYk9uIjpmYWxzZSwiZmFpbnRlZCI6MH0seyJmIjp7IndlYXRoZXIiOiJhdXRvIiwidGVycmFpbiI6ImF1dG8iLCJoZWxwaW5nSGFuZEwiOnRydWV9LCJ0Ijoia28iLCJzcCI6IktpbmdhbWJpdCIsImFiIjoiRGVmaWFudCIsIml0IjoiQ2hvcGxlIEJlcnJ5IiwibmEiOiJIYXJkeSIsInN0IjoiSGVhbHRoeSIsIm12IjoiTW9vbmJsYXN0Iiwic3BBIjozMiwiaHAiOjMyLCJkZiI6MCwic2QiOjE5LCJzcGUiOjAsImJvIjowLCJtYm8iOjEsInRociI6IjEiLCJ3IjoiMTAiLCJqb2luIjpmYWxzZSwibW9kZSI6Im92ZXIiLCJwY3QiOjEwMCwic2V0IjoiIiwiY3JpdCI6ZmFsc2UsImhpdHMiOjAsImhoIjpmYWxzZSwiYWJPbiI6ZmFsc2UsImZhaW50ZWQiOjB9XX0';
+  const st = T.decodeShare(tok), S = ctx.SOLVE, A = S.A, bs = ctx.POKEDEX_CHAMPIONS['Mega Floette'].bs;
+  assert(st && st.g.length === 3 && st.o === 2, 'old link decodes; the goal order stays as saved when all weights are equal');
+  const M = { name: st.m.sp, ability: st.m.ab, item: st.m.it, nature: st.m.na, status: 'Healthy', fm: st.m.fm, hpOpt: st.m.ho, lock: { hp: null, at: null, df: null, sa: null, sd: null, sp: null } };
+  const run = (mode) => S.solve(Object.assign({ pm: mode }, M), st.g, {}, () => {}, { mode });
+  return Promise.all([run('min'), run('perfect')]).then(([min, per]) => {
+    const dmg = sp => S.checkSpread(M, st.g, sp, 'Modest').goals[0].hi, hpStat = r => A.hpOf(bs.hp, r.base.hp);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(min.base)), { hp: 10, at: 0, df: 29, sa: 0, sd: 0, sp: 0 });
+    assert(per.goals.every(g => g.ok), 'every goal met'); assert.strictEqual(hpStat(per) % 16, 0, 'Recovery: the HP stat is a multiple of 16');
+    assert.strictEqual(per.base.hp, 27);
+    const spent = per.S1; assert(spent.hp + spent.at + spent.df + spent.sa + spent.sd + spent.sp <= 66);
+    assert(dmg(per.base) < dmg({ hp: 11, at: 0, df: 29, sa: 26, sd: 0, sp: 0 }) - 5, 'much less damage than the old 11/29/26');
+    assert(dmg(per.base) < dmg({ hp: 27, at: 0, df: 22, sa: 17, sd: 0, sp: 0 }), 'less damage than 27/22/17');
+    assert([0, 5, 15, 25].includes(per.S1.sa), 'the final SpA sits on a bump of the Modest nature: ' + per.S1.sa);
+  });
 });
 ok('unicode and size', () => {
   const s = sample(); for (let i = 0; i < 10; i++) s.g.push(Object.assign(T.newGoal('surv'), { sp: 'Garchomp', mv: 'Earthquake' }));
@@ -138,4 +203,4 @@ ok('type chips and radar chart are well formed', () => {
   assert(svg.startsWith('<svg') && svg.endsWith('</svg>') && !/NaN|undefined/.test(svg), 'radar must not contain NaN/undefined');
   assert.strictEqual((svg.match(/<circle/g) || []).length, 6); assert(svg.includes('17→32'));
 });
-console.log(`app logic: ${n} checks passed`);
+Promise.all(pending).then(() => console.log(`app logic: ${n} checks passed`)).catch(e => { console.error('FAIL', e.stack || e.message); process.exit(1); });

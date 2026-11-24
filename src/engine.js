@@ -69,7 +69,7 @@ function speedOf(p,ctx,side){var s=Math.floor(p.rawStats.sp*stg(p.boosts.sp||0))
  return s;}
 function grounded(p,abIgnored){return p.types.indexOf('Flying')<0&&(abIgnored?true:(p.ab!=='Levitate'&&p.ab!=='Eelevate'))&&p.item!=='Air Balloon';}
 
-function oneHit(a,d,mv,ctx,aSide,hitNo,crit){
+function oneHit(a,d,mv,ctx,aSide,hitNo,crit,child){
  var dSide=aSide==='L'?'R':'L',abA=a.ab,abD=d.ab;
  if(abA==='Mold Breaker'&&IGN[abD])abD='';
  var wx=ctx.cn?'':ctx.weather;if(abA==='Mega Sol')wx='Sun';
@@ -191,6 +191,7 @@ function oneHit(a,d,mv,ctx,aSide,hitNo,crit){
  /* danno base */
  var base=Math.floor(Math.floor(Math.floor(2*50/5+2)*bp*atk/def)/50)+2;
  if((mv.isSpread||(n==='Expanding Force'&&tr==='Psychic'&&grounded(a,false)))&&FIELD.spread!==false)base=am(base,3072);
+ if(child)base=am(base,1024); /* Parental Bond's second hit: 25% of the base damage, before the random roll */
  if((wx==='Sun'&&type==='Fire')||(wx==='Rain'&&type==='Water'))base=am(base,6144);
  else if((wx==='Sun'&&type==='Water')||(wx==='Rain'&&type==='Fire'))base=am(base,2048);
  if(crit)base=am(base,6144);
@@ -234,13 +235,12 @@ function calcMove(a,d,mv,ctx,aSide){
  var crit=mv.crit||!!mv.alwaysCrit||(a.ab==='Merciless'&&(d.status==='Poisoned'||d.status==='Badly Poisoned'));if(crit&&(d.ab==='Shell Armor'||d.ab==='Battle Armor')&&a.ab!=='Mold Breaker')crit=false;
  var hits=mv.hits||1;if(a.ab==='Skill Link'&&mv.hitRange&&mv.hitRange.length===2)hits=mv.hitRange[1];
  var tot=null,first=null,parts=[];
- if(a.ab==='Parental Bond'&&hits===1&&!mv.isSpread)hits=2;
+ var pb=a.ab==='Parental Bond'&&hits===1&&!mv.isSpread;if(pb)hits=2;
  for(var h=1;h<=hits;h++){
-  var o=oneHit(a,d,mv,ctx,aSide,h,crit);
+  var o=oneHit(a,d,mv,ctx,aSide,h,crit,pb&&h===2);
   if(!o.r){out.damage=[0];out.description=a.name+' '+mv.name+' vs. '+d.name+': no effect';return out;}
   if(!first)first=o;
   var rr=o.r;
-  if(a.ab==='Parental Bond'&&hits===2&&h===2)rr=rr.map(function(v){return Math.max(1,Math.floor(v/4))});
   parts.push(rr.slice());tot=tot?tot.map(function(v,i){return v+(rr[i%rr.length])}):rr.slice();}
  out.damage=tot;out.parts=parts;
  var ak=first.atkK,pl=function(p,k){var m=NAT[p.nature]||['',''];return m[0]!==m[1]&&m[0]===k?'+':''};

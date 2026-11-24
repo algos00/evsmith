@@ -25,6 +25,7 @@ select:focus,input:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .t-surv{--k:var(--s2)}.t-ko{--k:var(--s1)}.t-spd{--k:var(--s5)}
 .gc select,.gc input[type=number],.gc input.ac{background:var(--card)}
 .gh{display:flex;justify-content:space-between;align-items:center}
+.gb{display:flex;gap:4px;align-items:center}.mv{cursor:grab;padding:4px 6px;color:var(--mu,#889);user-select:none;touch-action:none}.ord{font-weight:700;opacity:.7;margin-right:2px}.gc.over{outline:2px dashed var(--k,var(--bd))}.x:disabled{opacity:.35;cursor:default}
 .x{width:auto;padding:4px 10px;margin:0;border:0;border-radius:8px;background:var(--card);color:var(--bad);font-size:15px}
 .add{--k:var(--ac);width:100%;background:transparent;border:1.5px solid var(--k);color:var(--tx);font-weight:600;font-size:14px;padding:10px 6px;border-radius:12px;margin-top:6px}
 .add:active{background:color-mix(in srgb,var(--k) 20%,transparent)}

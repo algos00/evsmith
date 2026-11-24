@@ -14,9 +14,12 @@ const shard = (name, args) => Array.from({ length: SHARDS }, (_, k) => [`${name}
 /* slowest single checks first (a queue works best when the long jobs start early) */
 const steps = full ? [
   ['features', ['features.js', '1', '25']],
+  ['Perfect spread regression (Mega Floette)', ['regression.js']],
   ['engine vs @smogon/calc (seed 1)', ['compare-smogon.js', '1', '20000']],
   ['engine vs @smogon/calc (seed 2)', ['compare-smogon.js', '2', '20000']],
   ['situational abilities vs @smogon/calc', ['situational.js', '1', '12000']],
+  ['weather and abilities vs @smogon/calc (seed 1)', ['weather.js', '1', '400']],
+  ['weather and abilities vs @smogon/calc (seed 2)', ['weather.js', '2', '400']],
   ...shard('optimizer vs exhaustive search (seed 1)', ['optimizer-bruteforce.js', '1', '60', '6']),
   ...shard('optimizer vs exhaustive search (seed 2)', ['optimizer-bruteforce.js', '2', '60', '6']),
   ['app logic', ['app-logic.js']],
@@ -26,7 +29,9 @@ const steps = full ? [
   ['engine vs @smogon/calc', ['compare-smogon.js', '1', '3000']],
   ...shard('optimizer vs exhaustive search', ['optimizer-bruteforce.js', '1', '16', '0']),
   ['situational abilities vs @smogon/calc', ['situational.js', '1', '2000']],
+  ['weather and abilities vs @smogon/calc', ['weather.js', '1', '200']],
   ['features', ['features.js', '1', '6']],
+  ['Perfect spread regression (Mega Floette)', ['regression.js']],
   ['app logic', ['app-logic.js']],
   ['colour contrast (WCAG)', ['contrast.js']],
   ['Italian translation coverage', ['i18n.js']]

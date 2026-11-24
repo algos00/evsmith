@@ -121,4 +121,20 @@ while (scenarios.length < NSC) {
   const sand2 = A.mkPoke({ name: 'Sandaconda', ability: 'Sand Spit', nature: 'Hardy', sp: {}, moves: [] }), fo2 = A.mkPoke({ name: 'Rillaboom', ability: 'None', nature: 'Hardy', sp: {}, moves: ['Wood Hammer'] });
   assert.deepStrictEqual(dmgSpit, A.calc(fo2, sand2).mine[0].damage, 'Sand Spit must not start sand by itself');
   console.log('Sand Spit / Seed Sower: no automatic weather or terrain');
+
+  /* 5. Defence boosts on my side of a Survive goal */
+  const Mb = { name: 'Garchomp', ability: 'Rough Skin', item: '', nature: 'Hardy', status: 'Healthy', lock: Object.assign({}, NOLOCK) };
+  const gA = S.newGoal('surv'); Object.assign(gA, { sp: 'Sneasler', ab: 'Unburden', mv: 'Close Combat', spA: 32, f: { weather: '', terrain: '' } });
+  const gS = S.newGoal('surv'); Object.assign(gS, { sp: 'Gardevoir', ab: 'Trace', mv: 'Moonblast', spA: 32, f: { weather: '', terrain: '' } });
+  const mx = (g, mbo) => { const x = S.sv(Mb, {}, 'Hardy', Object.assign(attOf(g), { mbo })); return x.rolls[x.rolls.length - 1]; };
+  const base = mx(gA), plus1 = mx(gA, { df: 1 }), plus2 = mx(gA, { df: 2 }), minus1 = mx(gA, { df: -1 });
+  assert(plus1 < base && plus2 < plus1 && minus1 > base, 'Def boosts must change physical damage');
+  assert(Math.abs(plus1 / base - 2 / 3) < 0.04 && Math.abs(plus2 / base - 0.5) < 0.04, 'Def +1/+2 should be about x2/3 and x1/2');
+  assert.strictEqual(mx(gA, { sd: 2 }), base, 'SpD boost must not change physical damage');
+  assert(mx(gS, { sd: 1 }) < mx(gS) && mx(gS, { df: 2 }) === mx(gS), 'SpD boost lowers special damage, Def boost does not');
+  console.log('Defence boosts: Def/SpD +1/+2 scale physical/special damage as expected');
+
+  /* 6. HP Optimizations are listed by importance */
+  assert.strictEqual(S.HPOPT.map(r => r[0]).join(), ['recovery', 'poisonheal', 'lifeorb', 'substitute', 'residual', 'sitrus', 'poison', 'maxhp', 'minhp'].join());
+  console.log('HP Optimizations: order Recovery, Poison Heal, Life Orb, Substitute, Residual, Sitrus, Poison, Max HP, Min HP');
 })().catch(e => { console.error('FAIL', e.message); process.exit(1); });

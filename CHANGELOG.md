@@ -2,6 +2,17 @@
 
 All notable changes to EVSmith. Versions follow the Git tags (`vX.Y.Z`).
 
+## 1.5.0
+
+- New optimizer: an exhaustive search over every spread (max 32 per stat, 66 points) with a proven result, replacing the old greedy one.
+- Two modes: **Minimum points** (as before) and **Perfect spread** (uses the points for the best margins: Recovery and other HP Optimizations first, then every calculation balanced so the weakest margin is lifted first, then the stat your nature raises lands on a bump).
+- Your goals are now a priority list: drag the handle or use the ↑ ↓ buttons. The first goal counts most; if not everything fits, the ones lower in the list are given up first and the result shows which are met. Old saves and links keep working (their Required / Important / Nice to have order is converted).
+- Survive goals have a “Your Def boost” and “Your SpD boost”.
+- Helping Hand is only counted when ticked in the goal's “Field, Weather & Multiplicator” box (the box on KO goals is gone); otherwise you only get the hint that it would give the KO.
+- Tournament meta: a new option to knock out (or deal a share of the HP of) the most used Pokémon with the moves of your KO goals, with an assumed bulk; the meta is capped at 60 goals.
+- “HP Optimizations” (renamed, ordered by importance).
+- Fix: Parental Bond's second hit is now 25% of the base damage before the damage rolls, as in the game (it was off by a point in many cases).
+
 ## 1.4.1
 
 - 3D hero: the model is smaller so it no longer overflows, and the hero uses `dvh` so it fits Safari's moving toolbar.

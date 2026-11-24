@@ -1,6 +1,6 @@
 # EVSmith
 
-Tell EVSmith what your Pokémon must **survive**, **KO** and **outspeed**, and it builds the 66-point Stat Point spread that does it with the fewest points. For Pokémon Champions (level 50, doubles, VGC).
+Tell EVSmith what your Pokémon must **survive**, **KO** and **outspeed**, and it builds the 66-point Stat Point spread that does it, either with the fewest points ("Minimum points") or using all of them for the best margins ("Perfect spread"). Goals are ranked by their order in the list, which you can change by dragging or with the arrow buttons. For Pokémon Champions (level 50, doubles, VGC).
 
 It is a single HTML file with no server and no tracking.
 
@@ -18,6 +18,7 @@ A usage guide is built into the page ("How to use EVSmith").
 - Survive, KO and Speed goals with priorities; weather, terrain, screens, Tailwind, Helping Hand and more per goal.
 - Tries every nature, or the one you choose; keeps the points you want fixed.
 - For KO goals, shows the minimum points **with and without Helping Hand**.
+- Optional tournament-meta goals: survive the most used attacks, outspeed the most used Pokémon, and knock out (or take a share of the HP of) the most used Pokémon with your own KO moves.
 - Explains which goal needs each point, and can spend leftover points for the best resistance or to tune the HP stat (Leftovers, Sitrus Berry, Life Orb, Substitute, poison…).
 - Optional tournament meta (usage and sets from online Limitless tournaments).
 - Pokémon pictures, a hexagon chart of the spread, and a type-coloured theme for light and dark mode.

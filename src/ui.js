@@ -25,11 +25,11 @@ function mkMe(M,sp,nat,mv,bo){return A.mkPoke({name:M.name,ability:M.ability,ite
 function myBoost(g){var m=MV[g.mv]||{},k=g.mv==='Body Press'?'df':(m.category==='Special'?'sa':'at'),o={};o[k]=+g.mbo||0;return o;}
 function mkOpp(o,mv){return A.mkPoke({name:o.name,ability:o.ability,item:o.item,nature:o.nature,sp:o.sp,boosts:o.boosts||{},status:o.status,abOn:o.abOn,fainted:o.fainted,moves:mv?[{name:mv.move,crit:mv.crit,hits:mv.hits}]:[]});}
 function norm(d){return typeof d==='number'?[d]:d;}
-function sv(M,sp,nat,att){A.mkField(att.fo||FOG);var me=mkMe(M,sp,nat),o=mkOpp(att.opp,att),r=A.calc(me,o),x=r.theirs[0];return{rolls:norm(x.damage),lists:(x.parts&&x.parts.length?x.parts:[norm(x.damage)]),hp:me.maxHP,desc:x.description,me:me};}
+function sv(M,sp,nat,att){A.mkField(att.fo||FOG);var me=mkMe(M,sp,nat,undefined,att.mbo),o=mkOpp(att.opp,att),r=A.calc(me,o),x=r.theirs[0];return{rolls:norm(x.damage),lists:(x.parts&&x.parts.length?x.parts:[norm(x.damage)]),hp:me.maxHP,desc:x.description,me:me};}
 function conv(lists,hp,surv){var m=new Map([[0,1]]);lists.forEach(function(L){var n=new Map();m.forEach(function(c,v){L.forEach(function(x){n.set(v+x,(n.get(v+x)||0)+c)})});m=n});var t=0,ok=0;m.forEach(function(c,v){t+=c;if(surv?v<hp:v>=hp)ok+=c});return ok/t;}
 function gp(M,sp,nat,G){var hp=0,L=[];if(G.myAt!=null)sp=Object.assign({at:G.myAt},sp);G.atts.forEach(function(a){var x=sv(M,sp,nat,a);hp=x.hp;x.lists.forEach(function(l){L.push(l)});});return conv(L,hp,true);}
 var FOG={};
-function ko(M,sp,nat,K){var me=mkMe(M,sp,nat,[{name:K.move,crit:K.crit,hits:K.hits}],K.mb),o=mkOpp(K.opp),f0=K.fo||FOG;A.mkField(K.hh?Object.assign({},f0,{helpingHandL:1}):f0);var r=A.calc(me,o);var x=r.mine[0],rolls=norm(x.damage),hp=Math.max(1,Math.round(o.maxHP*K.pct/100));return{p:conv((x.parts&&x.parts.length?x.parts:[rolls]),hp,false),rolls:rolls,hp:hp,full:o.maxHP,desc:x.description};}
+function ko(M,sp,nat,K){var me=mkMe(M,sp,nat,[{name:K.move,crit:K.crit,hits:K.hits}],K.mb),o=mkOpp(K.opp),f0=K.fo||FOG;A.mkField(K.hh===undefined?f0:Object.assign({},f0,{helpingHandL:K.hh?1:0}));var r=A.calc(me,o);var x=r.mine[0],rolls=norm(x.damage),hp=Math.max(1,Math.round(o.maxHP*K.pct/100));return{p:conv((x.parts&&x.parts.length?x.parts:[rolls]),hp,false),rolls:rolls,hp:hp,full:o.maxHP,desc:x.description};}
 function binMin(f){if(!f(32))return 33;var lo=0,hi=32;while(lo<hi){var m=(lo+hi)>>1;if(f(m))hi=m;else lo=m+1}return lo;}
 function depOf(M,G){var f=false,s=false;function H(sp){return G.atts.map(function(a){var r=sv(M,sp,'Hardy',a).rolls;return r[r.length-1]})}
 var b=H({}),d=H({df:32}),e=H({sd:32});b.forEach(function(v,i){if(d[i]!==v)f=true;if(e[i]!==v)s=true});return f&&s?'ds':f?'d':s?'s':'h';}
@@ -51,7 +51,7 @@ function spdOk(M,S,nat){A.mkField(S.fo||FOG);var o=[];for(var s=0;s<=32;s++){var
 /* ---------- ottimizzatore ---------- */
 /* ---------- come spendere i punti avanzati ---------- */
 /* Extra HP optimizations: the HP stat is tuned with leftover points so that it fits what the player ticked (n = any whole number) */
-var HPOPT=[['recovery',N_('Recovery'),'16n',function(s){return s%16===0}],['poisonheal',N_('Poison Heal'),'8n',function(s){return s%8===0}],['sitrus',N_('Sitrus Berry'),'4n',function(s){return s%4===0}],['residual',N_('Residual damage'),'16n-1',function(s){return s%16===15}],['poison',N_('Poison'),'8n-1',function(s){return s%8===7}],['lifeorb',N_('Life Orb'),'10n-1',function(s){return s%10===9}],['substitute',N_('Substitute'),'4n+1',function(s){return s%4===1}],['maxhp',N_('Max HP'),N_('prefer high HP')],['minhp',N_('Min HP'),N_('prefer low HP')]];
+var HPOPT=[['recovery',N_('Recovery'),'16n',function(s){return s%16===0}],['poisonheal',N_('Poison Heal'),'8n',function(s){return s%8===0}],['lifeorb',N_('Life Orb'),'10n-1',function(s){return s%10===9}],['substitute',N_('Substitute'),'4n+1',function(s){return s%4===1}],['residual',N_('Residual damage'),'16n-1',function(s){return s%16===15}],['sitrus',N_('Sitrus Berry'),'4n',function(s){return s%4===0}],['poison',N_('Poison'),'8n-1',function(s){return s%8===7}],['maxhp',N_('Max HP'),N_('prefer high HP')],['minhp',N_('Min HP'),N_('prefer low HP')]];
 function tuneHp(base,hp0,room,sel){var conds=HPOPT.filter(function(r){return r[3]&&sel.indexOf(r[0])>=0}),high=sel.indexOf('maxhp')>=0&&sel.indexOf('minhp')<0,best=null;
  if(base===1)room=0;
  for(var a=0;a<=room;a++){var st=A.hpOf(base,hp0+a),ok=conds.filter(function(r){return r[3](st)});
@@ -105,99 +105,171 @@ function spendFree(M,S,free,mode,nat,ctx){
 /* ---------- why every point is there ---------- */
 function goalTests(M,nat,groups,kos,spds){var T=[];
  groups.forEach(function(G){T.push({meta:!!G.meta,label:tr('Survive {0}',[G.atts.map(function(a){return a.opp.name+' '+a.move}).join(' + ')]),f:function(S){return gp(M,S,nat,G)>=G.thr-1e-9;}});});
- kos.forEach(function(K){T.push({meta:false,label:tr('KO with {0} on {1}',[K.move,K.opp.name]),f:function(S){return ko(M,S,nat,K).p>=K.thr-1e-9;}});});
+ kos.forEach(function(K){T.push({meta:!!K.meta,label:tr('KO with {0} on {1}',[K.move,K.opp.name]),f:function(S){return ko(M,S,nat,K).p>=K.thr-1e-9;}});});
  spds.forEach(function(Sg){T.push({meta:!!Sg.meta,label:tr(Sg.mode==='under'?N_('Slower than {0}'):N_('Faster than {0}'),[Sg.opp.name]),f:function(S){A.mkField(Sg.fo||FOG);var r=A.calc(mkMe(M,S,nat),mkOpp(Sg.opp));return Sg.mode==='under'?r.mySpeed<r.oppSpeed:r.mySpeed>r.oppSpeed;}});});
  return T;}
 /* a goal "pins" a stat when it is met with S but fails as soon as that stat loses one point (the others unchanged) */
 function pinsOf(M,nat,S,tests){var out={};['hp','at','df','sa','sd','sp'].forEach(function(k){out[k]=[];if(!S[k]||M.lock[k]!=null)return;var T=Object.assign({},S);T[k]--;
  tests.forEach(function(t){if(t.f(S)&&!t.f(T))out[k].push({label:t.label,meta:t.meta});});});return out;}
+/* boosts on my own Def / SpD for a Survive goal (undefined when there are none) */
+function defBoost(g){var o={};if(+g.db)o.df=+g.db;if(+g.sb)o.sd=+g.sb;return o.df||o.sd?o:undefined;}
 function buildGoals(goals){
 var groups=[],kos=[],spds=[];
  goals.forEach(function(g,i){
-  if(g.t==='surv'){var at={opp:oppCfg(g),move:g.mv,crit:g.crit,hits:+g.hits||0,g:g,fo:flatField(g.f)},last=groups[groups.length-1];
-   if(g.join&&i>0&&goals[i-1].t==='surv'&&last&&last.atts.length<3)last.atts.push(at);else groups.push({atts:[at],thr:+g.thr,w:+g.w,meta:!!g.meta});}
-  else if(g.t==='ko')kos.push({g:g,fo:flatField(g.f),opp:oppCfg(g),move:g.mv,crit:g.crit,hits:+g.hits||0,mb:myBoost(g),hh:!!g.hh,thr:+g.thr,w:+g.w,pct:+g.pct||100});
-  else spds.push({g:g,fo:flatField(g.f),opp:oppCfg(g),mode:g.mode,w:+g.w,meta:!!g.meta});});
+  if(g.t==='surv'){var at={opp:oppCfg(g),move:g.mv,crit:g.crit,hits:+g.hits||0,mbo:defBoost(g),g:g,fo:flatField(g.f)},last=groups[groups.length-1];
+   if(g.join&&i>0&&goals[i-1].t==='surv'&&last&&last.atts.length<3)last.atts.push(at);else groups.push({atts:[at],thr:+g.thr,w:+g.w,meta:!!g.meta,ix:i});}
+  else if(g.t==='ko')kos.push({ix:i,meta:!!g.meta,g:g,fo:flatField(g.f),opp:oppCfg(g),move:g.mv,crit:g.crit,hits:+g.hits||0,mb:myBoost(g),thr:+g.thr,w:+g.w,pct:+g.pct||100});
+  else spds.push({ix:i,g:g,fo:flatField(g.f),opp:oppCfg(g),mode:g.mode,w:+g.w,meta:!!g.meta});});
  return{groups:groups,kos:kos,spds:spds};}
 /* report of every goal for a given spread: chance, damage range, minimum points with and without Helping Hand */
 function verify(M,S,nat,groups,kos,spds){var rep={goals:[]};
  var me=mkMe(M,S,nat);rep.stats={hp:me.maxHP,at:me.rawStats.at,df:me.rawStats.df,sa:me.rawStats.sa,sd:me.rawStats.sd,sp:me.rawStats.sp};
  groups.forEach(function(G){var L=[],hp=0,desc=[];G.atts.forEach(function(a){var x=sv(M,S,nat,a);x.lists.forEach(function(l){L.push(l)});hp=x.hp;desc.push(x.desc)});
   var p=conv(L,hp,true),mn=0,mx=0;L.forEach(function(r){mn+=r[0];mx+=r[r.length-1]});
-  rep.goals.push({t:'surv',meta:!!G.meta,ok:p>=G.thr-1e-9,p:p,lo:mn/hp*100,hi:mx/hp*100,label:G.atts.map(function(a){return a.opp.name+' '+a.move}).join(' + '),desc:desc.join(' | '),w:G.w});});
- kos.forEach(function(K){var x=ko(M,S,nat,K),r=x.rolls,okk=x.p>=K.thr-1e-9,o={t:'ko',ok:okk,p:x.p,lo:r[0]/x.full*100,hi:r[r.length-1]/x.full*100,label:tr('{0} on {1}',[K.move,K.opp.name]),desc:x.desc,w:K.w,pts:koPts(M,K,nat)};
-  if(!okk&&!K.hh){var xh=ko(M,S,nat,Object.assign({},K,{hh:true})),rh=xh.rolls;o.hh={ok:xh.p>=K.thr-1e-9,p:xh.p,lo:rh[0]/xh.full*100,hi:rh[rh.length-1]/xh.full*100};}
+  rep.goals.push({ix:G.ix,t:'surv',meta:!!G.meta,ok:p>=G.thr-1e-9,p:p,lo:mn/hp*100,hi:mx/hp*100,label:G.atts.map(function(a){return a.opp.name+' '+a.move}).join(' + '),desc:desc.join(' | '),w:G.w});});
+ kos.forEach(function(K){var x=ko(M,S,nat,K),r=x.rolls,okk=x.p>=K.thr-1e-9,o={ix:K.ix,meta:!!K.meta,t:'ko',ok:okk,p:x.p,lo:r[0]/x.full*100,hi:r[r.length-1]/x.full*100,label:tr('{0} on {1}',[K.move,K.opp.name]),desc:x.desc,w:K.w,pts:K.meta?null:koPts(M,K,nat)};
+  if(!okk&&!K.fo.helpingHandL){var xh=ko(M,S,nat,Object.assign({},K,{hh:true})),rh=xh.rolls;o.hh={ok:xh.p>=K.thr-1e-9,p:xh.p,lo:rh[0]/xh.full*100,hi:rh[rh.length-1]/xh.full*100};}
   rep.goals.push(o);});
- spds.forEach(function(Sg){A.mkField(Sg.fo||FOG);var r=A.calc(mkMe(M,S,nat),mkOpp(Sg.opp)),okk=Sg.mode==='under'?r.mySpeed<r.oppSpeed:r.mySpeed>r.oppSpeed;rep.goals.push({t:'spd',meta:!!Sg.meta,ok:okk,my:r.mySpeed,opp:r.oppSpeed,label:tr(Sg.mode==='under'?N_('Slower than {0}'):N_('Faster than {0}'),[Sg.opp.name]),w:Sg.w});});
- return rep;}
+ spds.forEach(function(Sg){A.mkField(Sg.fo||FOG);var r=A.calc(mkMe(M,S,nat),mkOpp(Sg.opp)),okk=Sg.mode==='under'?r.mySpeed<r.oppSpeed:r.mySpeed>r.oppSpeed;rep.goals.push({ix:Sg.ix,t:'spd',meta:!!Sg.meta,ok:okk,my:r.mySpeed,opp:r.oppSpeed,label:tr(Sg.mode==='under'?N_('Slower than {0}'):N_('Faster than {0}'),[Sg.opp.name]),w:Sg.w});});
+ rep.goals.sort(function(a,b){return a.ix-b.ix});return rep;}
 /* check a spread you already have (no optimization) */
 function checkSpread(M,goals,S,nat){FOG={};A.mkField(FOG);var bg=buildGoals(goals),vf=verify(M,S,nat,bg.groups,bg.kos,bg.spds),sum=0;['hp','at','df','sa','sd','sp'].forEach(function(k){sum+=S[k]});
  return{check:true,S:S,S1:S,left:0,why:[],effort:[],base:S,pins:{},nat:nat,free:66-sum,alts:[],top:{tot:sum},goals:vf.goals,stats:vf.stats};}
+/* ---------- exhaustive optimizer ---------- */
+/* Every spread (each stat <= 32, total <= LIMIT) is judged by a score compared lexicographically (see AGENTS.md):
+   1. goals met, in the order of the goal list;  2. ("Perfect spread" only) the ticked HP Optimizations in their order (Recovery...);
+   3. ("Perfect spread" only) the margins of all goals together, worst first (leximin: lift the weakest margin, then the next one...): every goal weighs the same;
+   4. ("Perfect spread" only) the stat the nature raises ends on a "bump" (the last point gave +2) or at 0;  5. Max / Min HP;  6. fewer points.
+   Damage depends on few stats, so the search is split in two blocks that are exact together: defence (HP, Def, SpD; Atk too for Foul Play)
+   and offence (Atk, SpA, Spe). For every point cost the best score of each block is kept and every pair of costs is merged.
+   A score is {f: coordinates that add up between blocks, g: margin elements}; leximin ignores which block an element comes from. */
+var EPS=1e-12;
+function numAsc(a,b){return a-b;}
+function zeroV(n){var v=new Array(n);for(var i=0;i<n;i++)v[i]=0;return v;}
+function newP(V){return{f:zeroV(V),g:[]};}
+function copyP(a){return{f:a.f.slice(),g:a.g.slice()};}
+function mergeP(a,b){var f=new Float64Array(a.f.length),i;for(i=0;i<f.length;i++)f[i]=a.f[i]+b.f[i];var g=new Float64Array(a.g.length+b.g.length);g.set(a.g);g.set(b.g,a.g.length);g.sort();return{f:f,g:g};}
+function freezeP(c){c.f=Float64Array.from(c.f);c.g=Float64Array.from(c.g).sort();return c;}
+/* compare the coordinates that rank before the margins */
+function cmpF(a,b,NF){for(var i=0;i<NF;i++){var d=a[i]-b[i];if(d>EPS)return 1;if(d<-EPS)return -1;}return 0;}
+/* NF = coordinates that rank before the margins */
+function cmpP(a,b,NF){var i,d;
+ for(i=0;i<NF;i++){d=a.f[i]-b.f[i];if(d>EPS)return 1;if(d<-EPS)return -1;}
+ for(i=0;i<a.g.length;i++){d=a.g[i]-b.g[i];if(d>EPS)return 1;if(d<-EPS)return -1;}
+ for(i=NF;i<a.f.length;i++){d=a.f[i]-b.f[i];if(d>EPS)return 1;if(d<-EPS)return -1;}
+ return 0;}
+/* margins are compared in whole percent of HP (rounded against the Pokémon), so equal-looking spreads tie and HP Optimizations can decide between them */
+function pct(x){return Math.ceil(x*100-1e-9);}
+/* sorted distribution of the summed damage of several attacks (every roll combination equally likely) */
+function distOf(lists){var m=new Map([[0,1]]);lists.forEach(function(L){var n=new Map();m.forEach(function(c,v){L.forEach(function(x){n.set(v+x,(n.get(v+x)||0)+c)})});m=n});
+ var v=Array.from(m.keys()).sort(numAsc),c=[],t=0;v.forEach(function(k){t+=m.get(k);c.push(t)});return{v:v,c:c,N:t,max:v[v.length-1]};}
+/* chance that the summed damage is below hp */
+function pBelow(D,hp){var lo=0,hi=D.v.length;while(lo<hi){var m=(lo+hi)>>1;if(D.v[m]<hp)lo=m+1;else hi=m;}return lo?D.c[lo-1]/D.N:0;}
+/* a point on a stat is "well spent" when the last one bought +2 (the nature's rounding), or when none was bought */
+function isBump(b,k,nat,x){return !x||A.statOf(b,x,nat,k)-A.statOf(b,x-1,nat,k)===2;}
+/* HP Optimizations as score coordinates: one 0/1 per ticked condition (in the list's order), then Max HP / Min HP */
+function hpCoords(M){var sel=M.hpOpt||[],conds=HPOPT.filter(function(r){return r[3]&&sel.indexOf(r[0])>=0}),high=sel.indexOf('maxhp')>=0,low=sel.indexOf('minhp')>=0;
+ return{conds:conds,n:conds.length+1,of:function(stat){var o=conds.map(function(r){return r[3](stat)?1:0});o.push(high&&!low?stat:(low&&!high?-stat:0));return o;}};}
 async function solve(M,goals,fo,say,opts){
- FOG=fo||{};A.mkField(FOG);var LIMIT=(opts&&opts.limit)||66;
+ FOG=fo||{};A.mkField(FOG);var LIMIT=(opts&&opts.limit)||66,perfect=((opts&&opts.mode)||M.pm)==='perfect';
  var bg=buildGoals(goals),groups=bg.groups,kos=bg.kos,spds=bg.spds;
  groups.forEach(function(G){G.fp=G.atts.some(function(a){return a.move==='Foul Play'});G.dep=depOf(M,G);});
  var fpG=groups.filter(function(G){return G.fp});
  kos.forEach(function(K){K.key=koDep(M,K);});
- var tabC={},koC={},spC={},results=[];
- var natList=M.nature==='*'?NATS:[M.nature];
+ var items=[];groups.forEach(function(G){items.push({t:'g',o:G,ix:G.ix})});kos.forEach(function(K){items.push({t:'k',o:K,ix:K.ix})});spds.forEach(function(S){items.push({t:'s',o:S,ix:S.ix})});
+ items.sort(function(a,b){return a.ix-b.ix});items.forEach(function(it,j){it.j=j});
+ var N=items.length,hc=hpCoords(M),NC=hc.n-1,NF=N+NC,bOff=NF,pOff=bOff+1,V=pOff+1,bs=DEX[M.name].bs;
+ /* f layout: goals met [0,N), HP conditions [N,N+NC), stat-bump bonus, Max/Min HP preference. g: two margin elements per Survive / KO goal that is met (100 when it is not) */
+ var setItem=function(c,j,sat,p,m){c.f[j]=sat?1:0;if(perfect&&items[j].t!=='s'){c.g.push(sat?p*100:100,sat?m:100);}};
+ var natList=M.nature==='*'?NATS:[M.nature],results=[],dAll={},oAll={};
+ var rg=function(v){return v==null?Array.from({length:33},function(_,i){return i}):[v]},HR=rg(M.lock.hp),DR=rg(M.lock.df),SR=rg(M.lock.sd),AR0=rg(M.lock.at),CR=rg(M.lock.sa),PR=rg(M.lock.sp);
  for(var ni=0;ni<natList.length;ni++){
-  var n=natList[ni],mods=nm(n);say(tr('Trying nature {0} ({1}/{2})…',[n,ni+1,natList.length]));await tick();
-  var tabKeys=function(G){return G.dep==='d'?['df']:G.dep==='s'?['sd']:G.dep==='ds'?['df','sd']:[];};
-  var tabFor=function(G,gi,fresh){var keys=tabKeys(G),cl=keys.map(function(k){return cls(mods[k])}),key=gi+'|'+cl.join('');
-   if(G.fp)return buildTab(M,G,G.dep,n); /* Foul Play also depends on the nature's effect on Atk: use the real nature */
-   if(fresh)return buildTab(M,G,G.dep,repNat(keys,cl));if(!tabC[key])tabC[key]=buildTab(M,G,G.dep,repNat(keys,cl));return tabC[key];};
-  var tabs=groups.map(function(G,gi){return G.fp?null:tabFor(G,gi,false);});
-  var needs=kos.map(function(K,ki){if(K.key==='none'){var kk=ki+'|none';if(!koC[kk])koC[kk]=koNeed(M,K,'none',n);return koC[kk];}var c=cls(mods[K.key]),kk=ki+'|'+c;if(!koC[kk])koC[kk]=koNeed(M,K,K.key,repNat([K.key],[c]));return koC[kk];});
-  var sps=spds.map(function(S,si){var c=cls(mods.sp),kk=si+'|'+c;if(!spC[kk])spC[kk]=spdOk(M,S,repNat(['sp'],[c]));return spC[kk];});
-  var rg=function(v){return v==null?Array.from({length:33},function(_,i){return i}):[v]},HR=rg(M.lock.hp),DR=rg(M.lock.df),SR=rg(M.lock.sd),SPR=rg(M.lock.sp);
-  var dfK=[];kos.forEach(function(K,i){if(K.key==='df'&&needs[i]<=32)dfK.push({n:needs[i],w:K.w});});var BSB=DEX[M.name].bs,mH=function(h){return Math.floor((2*BSB.hp+31)/2)+60+h},mS=function(b,sp,k){return Math.floor((Math.floor((2*b+31)/2)+5+sp)*nm(n)[k])};
-  var aC=M.lock.at==null?[0]:[M.lock.at],cC=M.lock.sa==null?[0]:[M.lock.sa];needs.forEach(function(nd,i){if(nd<=32){if(kos[i].key==='at'&&M.lock.at==null)aC.push(nd);if(kos[i].key==='sa'&&M.lock.sa==null)cC.push(nd);}});
-  /* best defensive spend for every budget, then the best way to add Atk / SpA / Spe on top; aList = Atk values to try */
-  var search=function(tabs,aList){
-   var best=[],h,d,s,gi;for(var q=0;q<=LIMIT;q++)best.push(null);
-   for(var hi=0;hi<HR.length;hi++)for(var di=0;di<DR.length;di++)for(var si=0;si<SR.length;si++){h=HR[hi];d=DR[di];s=SR[si];var cost=h+d+s;if(cost>LIMIT)continue;var W=0,C=0;
-    for(gi=0;gi<groups.length;gi++){var t=tabs[gi],dep=groups[gi].dep,okp=dep==='h'?t[h]:dep==='d'?d>=t[h]:dep==='s'?s>=t[h]:s>=t[h][d];if(okp){W+=groups[gi].w;C++;}}
-    dfK.forEach(function(x){if(d>=x.n){W+=x.w;C++;}});var bkv=mH(h)*mS(BSB.df,d,'df')*mS(BSB.sd,s,'sd');var b=best[cost];if(!b||W>b.W||(W===b.W&&C>b.C)||(W===b.W&&C===b.C&&bkv>b.bk))best[cost]={W:W,C:C,h:h,d:d,s:s,cost:cost,bk:bkv};}
-   var at=[best[0]];for(q=1;q<=LIMIT;q++){var p=at[q-1],c=best[q];at.push(c&&(!p||c.W>p.W||(c.W===p.W&&c.C>p.C))?c:p);}
-   var bestN=null;
-   aList.forEach(function(a){cC.forEach(function(c){for(var spi=0;spi<SPR.length;spi++){var sp=SPR[spi];var used=a+c+sp;if(used>LIMIT)continue;var W=0,C=0;
-    kos.forEach(function(K,i){var nd=needs[i],okk;if(K.key==='df')return;if(K.key==='sp')okk=nd[sp];else{okk=nd<=32&&(K.key==='at'?a>=nd:K.key==='sa'?c>=nd:nd===0);}if(okk){W+=K.w;C++;}});
-    spds.forEach(function(S,i){if(sps[i][sp]){W+=S.w;C++;}});
-    var bk=at[LIMIT-used];if(!bk)continue;W+=bk.W;C+=bk.C;var tot=used+bk.cost;
-    if(!bestN||W>bestN.W||(W===bestN.W&&C>bestN.C)||(W===bestN.W&&C===bestN.C&&tot<bestN.tot))bestN={W:W,C:C,tot:tot,n:n,a:a,c:c,sp:sp,h:bk.h,d:bk.d,sd:bk.s};}});});
-   return bestN;};
+  var n=natList[ni];say(tr('Trying nature {0} ({1}/{2})…',[n,ni+1,natList.length]));await tick();
+  var th=function(x){return x.thr-1e-9};
+  /* offence block: Atk / SpA / Spe contributions of the KO and Speed goals */
+  var base0=newP(V),cA=[],cC=[],cP=[],cD=[],i0;for(i0=0;i0<=32;i0++){cA.push(newP(V));cC.push(newP(V));cP.push(newP(V));cD.push(newP(V));}
+  items.forEach(function(it){var j=it.j,K=it.o;
+   if(it.t==='k'){var tgt=K.key==='at'?cA:K.key==='sa'?cC:K.key==='sp'?cP:K.key==='df'?cD:null;
+    var put=function(c,x){var r=ko(M,x,n,K);setItem(c,j,r.p>=th(K),r.p,Math.min(100,Math.floor(r.rolls[0]/r.hp*100+1e-9)));};
+    if(!tgt)put(base0,{});else for(var x=0;x<=32;x++)put(tgt[x],K.key==='at'?{at:x}:K.key==='sa'?{sa:x}:K.key==='sp'?{sp:x}:{df:x});}
+   else if(it.t==='s'){var ok=spdOk(M,K,n);for(var x2=0;x2<=32;x2++)setItem(cP[x2],j,ok[x2],0,0);}});
+  /* the stat the nature raises: a point is well spent when the last one bought gave +2 (or when none was bought) */
+  var nmod=NATURES[n]||['',''],bk=nmod[0]&&nmod[0]!==nmod[1]&&nmod[0]!=='hp'?nmod[0]:null;
+  var bumpAt=function(x){return isBump(bs[bk],bk,n,x)?1:0;};
+  if(perfect&&bk){var tb=bk==='at'?cA:bk==='sa'?cC:bk==='sp'?cP:null;if(tb)for(var xb=0;xb<=32;xb++)tb[xb].f[bOff]+=bumpAt(xb);}
+  [cA,cC,cP,cD].forEach(function(T){T.forEach(freezeP);});freezeP(base0);
+  var hv=[];for(var h0=0;h0<=32;h0++)hv.push(perfect?hc.of(A.hpOf(bs.hp,h0)):null);
   var bestN=null;
-  if(!fpG.length)bestN=search(tabs,aC);
-  else aC.forEach(function(a0){ /* Foul Play hits with the Atk of the target: its survive table depends on the Atk chosen for this Pokémon */
-   fpG.forEach(function(G){G.myAt=a0;});
-   var tA=groups.map(function(G,gi){return G.fp?tabFor(G,gi,true):tabs[gi];}),r=search(tA,[a0]);
-   if(r&&(!bestN||r.W>bestN.W||(r.W===bestN.W&&r.C>bestN.C)||(r.W===bestN.W&&r.C===bestN.C&&r.tot<bestN.tot)))bestN=r;});
+  var runFor=function(aFix){
+   var AR=aFix==null?AR0:[aFix];
+   fpG.forEach(function(G){G.myAt=aFix;});
+   /* defence block */
+   var dcache=groups.map(function(){return new Map()});
+   var distFor=function(gi,d,s){var G=groups[gi],key=G.dep==='h'?0:G.dep==='d'?d:G.dep==='s'?s:d*64+s,m=dcache[gi],D=m.get(key);
+    if(!D){var L=[];G.atts.forEach(function(a){sv(M,{df:d,sd:s,at:aFix==null?0:aFix},n,a).lists.forEach(function(l){L.push(l)})});D=distOf(L);m.set(key,D);}return D;};
+   /* the blocks only see the nature through the multipliers of the stats they use: natures with the same effect share one result (not with Foul Play, which uses my Atk) */
+   var nmn=nm(n),cl=function(k){return cls(nmn[k])},dKey=fpG.length?null:cl('df')+cl('sd')+(bk==='df'||bk==='sd'?bk:'-'),oKey=fpG.length?null:cl('at')+cl('sa')+cl('sp')+(bk==='at'||bk==='sa'||bk==='sp'?bk:'-');
+   var bestD=dKey?dAll[dKey]:null,q;
+   if(!bestD){bestD=[];for(q=0;q<=LIMIT;q++)bestD.push(null);
+   var gItems=items.filter(function(it){return it.t==='g'});
+   var mS=function(b,sp,k){return Math.floor((Math.floor((2*b+31)/2)+5+sp)*nmn[k])},dfS=[],sdS=[],xs;for(xs=0;xs<=32;xs++){dfS.push(mS(bs.df,xs,'df'));sdS.push(mS(bs.sd,xs,'sd'));}
+   var GD=cD[0].g.length+2*gItems.length*(perfect?1:0),fb=new Float64Array(V),gb=new Float64Array(GD);
+   for(var hi=0;hi<HR.length;hi++)for(var di=0;di<DR.length;di++){var d=DR[di],h=HR[hi];if(h+d>LIMIT)continue;
+    for(var si=0;si<SR.length;si++){var s=SR[si],cost=h+d+s;if(cost>LIMIT)continue;
+     var hs=A.hpOf(bs.hp,h),cdd=cD[d],mnv=cdd.g.length?cdd.g[0]:1e9;fb.set(cdd.f);var k=0,z;
+     if(perfect){for(;k<cdd.g.length;k++)gb[k]=cdd.g[k];if(bk==='df')fb[bOff]+=bumpAt(d);else if(bk==='sd')fb[bOff]+=bumpAt(s);var hh=hv[h];for(z=0;z<hh.length;z++)fb[z<NC?N+z:pOff]+=hh[z];}
+     for(var g=0;g<gItems.length;g++){var it=gItems[g],G=it.o,D=distFor(groups.indexOf(G),d,s),p=pBelow(D,hs),sat=p>=th(G);fb[it.j]=sat?1:0;if(perfect){var e1=sat?p*100:100,e2=sat?100-pct(D.max/hs):100;gb[k++]=e1;gb[k++]=e2;if(e1<mnv)mnv=e1;if(e2<mnv)mnv=e2;}}
+     var b=bestD[cost],c0=b?cmpF(fb,b.v.f,NF):1;if(c0<0)continue;
+     if(perfect){if(c0===0&&mnv<b.v.g[0]-EPS)continue;gb.sort();}
+     var bkv=hs*dfS[d]*sdS[s],cm=c0>0?1:cmpP({f:fb,g:gb},b.v,NF);
+     if(cm>0||(cm===0&&bkv>b.bk))bestD[cost]={v:{f:fb.slice(),g:gb.slice()},h:h,d:d,s:s,bk:bkv};}}
+   if(dKey)dAll[dKey]=bestD;}
+   /* offence block */
+   var bestO=oKey?oAll[oKey]:null;
+   if(!bestO){bestO=[];for(q=0;q<=LIMIT;q++)bestO.push(null);
+   var GO=base0.g.length+cA[0].g.length+cC[0].g.length+cP[0].g.length,fo=new Float64Array(V),go=new Float64Array(GO);
+   for(var ai=0;ai<AR.length;ai++)for(var ci=0;ci<CR.length;ci++){var a=AR[ai],c=CR[ci];if(a+c>LIMIT)continue;
+    var ac=mergeP(base0,mergeP(cA[a],cC[c]));
+    for(var pi=0;pi<PR.length;pi++){var sp=PR[pi],cost2=a+c+sp;if(cost2>LIMIT)continue;
+     var cpp=cP[sp],x;for(x=0;x<V;x++)fo[x]=ac.f[x]+cpp.f[x];go.set(ac.g);go.set(cpp.g,ac.g.length);go.sort();
+     var b2=bestO[cost2];if(!b2||cmpP({f:fo,g:go},b2.v,NF)>0)bestO[cost2]={v:{f:fo.slice(),g:go.slice()},a:a,c:c,sp:sp};}}
+   if(oKey)oAll[oKey]=bestO;}
+   for(var c1=0;c1<=LIMIT;c1++){var bd=bestD[c1];if(!bd)continue;
+    for(var c2=0;c2<=LIMIT-c1;c2++){var bo=bestO[c2];if(!bo)continue;
+     var vv=mergeP(bd.v,bo.v),tot=c1+c2,cm2=bestN?cmpP(vv,bestN.v,NF):1;
+     if(cm2>0||(cm2===0&&(tot<bestN.tot||(tot===bestN.tot&&bd.bk>bestN.bk))))bestN={v:vv,tot:tot,bk:bd.bk,n:n,h:bd.h,d:bd.d,sd:bd.s,a:bo.a,c:bo.c,sp:bo.sp};}}
+  };
+  if(!fpG.length)runFor(null);
+  else AR0.forEach(function(a0){runFor(a0);}); /* Foul Play hits with the Atk of the target: the defence block depends on the Atk chosen */
   if(bestN)results.push(bestN);
  }
  fpG.forEach(function(G){G.myAt=null;});
- results.sort(function(x,y){return y.W-x.W||y.C-x.C||x.tot-y.tot});
+ results.sort(function(x,y){return cmpP(y.v,x.v,NF)||x.tot-y.tot});
  var B=results[0];if(!B)return null;
- /* spread minima = risultato principale; i punti avanzati sono mostrati a parte */
+ var sigOf=function(r){return r.v.f.slice(0,N).join('')};B.sig=sigOf(B);B.C=B.v.f.slice(0,N).reduce(function(t,x){return t+x},0);
  var S={hp:B.h,at:B.a,df:B.d,sa:B.c,sd:B.sd,sp:B.sp},free=66-(S.hp+S.at+S.df+S.sa+S.sd+S.sp),effort=[];
  var Sbase=Object.assign({},S),pins=pinsOf(M,B.n,Sbase,goalTests(M,B.n,groups,kos,spds));
- /* if some goal cannot be reached, use the free points to get as close as possible, uso i punti avanzati per avvicinarmi il più possibile */
- (function(){var items=[];
-  groups.forEach(function(G){if(!G.meta&&gp(M,S,B.n,G)<G.thr-1e-9)items.push({w:G.w,t:'surv',G:G});});
-  kos.forEach(function(K){if(ko(M,S,B.n,K).p<K.thr-1e-9)items.push({w:K.w,t:'ko',K:K});});
-  spds.forEach(function(Sg){A.mkField(Sg.fo||FOG);var r0=A.calc(mkMe(M,S,B.n),mkOpp(Sg.opp)),k0=Sg.mode==='under'?r0.mySpeed<r0.oppSpeed:r0.mySpeed>r0.oppSpeed;if(!k0&&!Sg.meta)items.push({w:Sg.w,t:'spd',Sg:Sg});});
-  items.sort(function(a,b){return b.w-a.w});
-  items.forEach(function(it){if(free<=0)return;
-   if(it.t==='ko'){var k=it.K.key;if((k==='at'||k==='sa'||k==='df')&&M.lock[k]==null&&S[k]<32){var ad=Math.min(free,32-S[k]);S[k]+=ad;free-=ad;effort.push({k:k,n:ad,label:tr('{0} on {1}',[it.K.move,it.K.opp.name])});}}
-   else if(it.t==='spd'){if(it.Sg.mode==='over'&&M.lock.sp==null&&S.sp<32){var ad2=Math.min(free,32-S.sp);S.sp+=ad2;free-=ad2;effort.push({k:'sp',n:ad2,label:tr('Faster than {0}',[it.Sg.opp.name])});}}
-   else{var G=it.G,dep=G.dep,ks=['hp'].concat(dep==='d'||dep==='ds'?['df']:[]).concat(dep==='s'||dep==='ds'?['sd']:[]),added={};
+ /* "Minimum points" with a goal out of reach: put the free points toward the closest ones, in the order of the list */
+ if(!perfect)(function(){var its=[];
+  items.forEach(function(it){if(it.o.meta)return;
+   if(it.t==='g'&&gp(M,S,B.n,it.o)<it.o.thr-1e-9)its.push(it);
+   else if(it.t==='k'&&ko(M,S,B.n,it.o).p<it.o.thr-1e-9)its.push(it);
+   else if(it.t==='s'){A.mkField(it.o.fo||FOG);var r0=A.calc(mkMe(M,S,B.n),mkOpp(it.o.opp));if(!(it.o.mode==='under'?r0.mySpeed<r0.oppSpeed:r0.mySpeed>r0.oppSpeed))its.push(it);}});
+  its.forEach(function(it){if(free<=0)return;
+   if(it.t==='k'){var k=it.o.key;if((k==='at'||k==='sa'||k==='df')&&M.lock[k]==null&&S[k]<32){var ad=Math.min(free,32-S[k]);S[k]+=ad;free-=ad;effort.push({k:k,n:ad,label:tr('{0} on {1}',[it.o.move,it.o.opp.name])});}}
+   else if(it.t==='s'){if(it.o.mode==='over'&&M.lock.sp==null&&S.sp<32){var ad2=Math.min(free,32-S.sp);S.sp+=ad2;free-=ad2;effort.push({k:'sp',n:ad2,label:tr('Faster than {0}',[it.o.opp.name])});}}
+   else{var G=it.o,dep=G.dep,ks=['hp'].concat(dep==='d'||dep==='ds'?['df']:[]).concat(dep==='s'||dep==='ds'?['sd']:[]),added={};
     var frac=function(){var tot=0,hp=1;G.atts.forEach(function(a){var x=sv(M,S,B.n,a);hp=x.hp;tot+=x.rolls[x.rolls.length-1];});return tot/hp;};
     while(free>0){var bk=null,bf=9e9;ks.forEach(function(k){if(M.lock[k]==null&&S[k]<32){S[k]++;var f=frac();S[k]--;if(f<bf){bf=f;bk=k;}}});if(!bk)break;S[bk]++;free--;added[bk]=(added[bk]||0)+1;}
     Object.keys(added).forEach(function(k){effort.push({k:k,n:added[k],label:tr('Survive {0}',[G.atts.map(function(a){return a.opp.name+' '+a.move}).join(' + ')])});});}});})();
  var sf=spendFree(M,S,free,M.fm||'smart',B.n,{kos:kos,groups:groups}),S1=sf.S;
  if(fpG.length&&S1.at>S.at&&fpG.some(function(G){return gp(M,S,B.n,G)>=G.thr-1e-9&&gp(M,S1,B.n,G)<G.thr-1e-9;})){sf.left+=S1.at-S.at;S1.at=S.at;sf.why.push(tr('Atk kept at {0}: more Atk would make Foul Play hit harder than your Survive goal allows.',[S.at]));}
- var rep={S:S,S1:S1,left:sf.left,why:sf.why,effort:effort,base:Sbase,pins:pins,nat:B.n,free:free,alts:results.slice(1,4).map(function(r){return{n:r.n,W:r.W,C:r.C,tot:r.tot}}),top:B,goals:[]};
- /* verifica finale con il motore */
+ /* "Perfect spread": leftover points never leave the stat the nature raises one point short of a bump (7 SpA -> 5 when the 6th and 7th bought +1 each) */
+ var bkF=(function(){var m=NATURES[B.n]||['',''];return m[0]&&m[0]!==m[1]&&m[0]!=='hp'?m[0]:null;})();
+ if(perfect&&bkF&&S1[bkF]>S[bkF]&&!isBump(bs[bkF],bkF,B.n,S1[bkF])){var y=S1[bkF]-1;while(y>S[bkF]&&!isBump(bs[bkF],bkF,B.n,y))y--;
+  if(y>=S[bkF]&&isBump(bs[bkF],bkF,B.n,y)){sf.left+=S1[bkF]-y;sf.why.push(tr('{0} kept at {1}: the next points would not raise the stat by 2 (the nature’s bump), so they stay free.',[NM[bkF],y]));S1[bkF]=y;}}
+ var rep={S:S,S1:S1,left:sf.left,why:sf.why,effort:effort,base:Sbase,pins:pins,nat:B.n,free:free,mode:perfect?'perfect':'min',
+  alts:results.slice(1,4).map(function(r){r.sig=sigOf(r);return{n:r.n,sig:r.sig,tot:r.tot,same:perfect?cmpP(r.v,B.v,NF)===0:r.sig===B.sig}}),top:B,goals:[]};
  var vf=verify(M,S,B.n,groups,kos,spds);rep.stats=vf.stats;rep.goals=vf.goals;
  return rep;}
 
@@ -264,7 +336,7 @@ $i('mSp').onchange=function(){var d=DEX[this.value];if(!d)return;$i('mAb').inner
  if(this.value!==lastMe){lastMe=this.value;$i('mIt').value='';$i('mNa').value='*';$i('mSt').value='Healthy';['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value='';});}};
 var BO=[['6','+6'],['5','+5'],['4','+4'],['3','+3'],['2','+2'],['1','+1'],['0','0'],['-1','−1'],['-2','−2'],['-3','−3'],['-4','−4'],['-5','−5'],['-6','−6']],goals=[];
 var THR=[];for(var q=16;q>=1;q--)THR.push([String(q/16),q===16?N_('100% (always)'):(q*6.25)+'%']);
-function newGoal(t){return{f:{weather:'auto',terrain:'auto'},note:'',t:t,sp:'',ab:'',it:'',na:'Hardy',st:'Healthy',mv:'',spA:32,hp:0,df:0,sd:0,spe:t==='spd'?32:0,bo:0,mbo:0,thr:'1',w:'10',join:false,mode:'over',pct:100,set:'',crit:false,hits:0,hh:false,abOn:false,fainted:0};}
+function newGoal(t){return{f:{weather:'auto',terrain:'auto'},note:'',t:t,sp:'',ab:'',it:'',na:'Hardy',st:'Healthy',mv:'',spA:32,hp:0,df:0,sd:0,spe:t==='spd'?32:0,bo:0,mbo:0,thr:'1',w:'10',join:false,mode:'over',pct:100,set:'',crit:false,hits:0,db:0,sb:0,abOn:false,fainted:0};}
 function sel(i,k,arr,cur){return '<select data-i="'+i+'" data-k="'+k+'">'+arr.map(function(x){return '<option value="'+x[0]+'"'+(String(x[0])===String(cur)?' selected':'')+'>'+esc(tr(x[1]))+'</option>'}).join('')+'</select>';}
 function num(i,k,v,mx){return '<input type="number" min="0" max="'+(mx||32)+'" data-i="'+i+'" data-k="'+k+'" value="'+v+'">';}
 function moveExtras(g,i){var h='<label class="ck"><input type="checkbox" data-i="'+i+'" data-k="crit"'+(g.crit?' checked':'')+'> '+tr('Critical hit')+'</label>',m=MV[g.mv];
@@ -278,20 +350,20 @@ function fieldSummary(f){f=f||newField();var p=[],lab=function(arr,v){var r=arr.
 function fieldBlock(g,i){var f=g.f||(g.f=newField());
  var dd=function(k,arr){return '<select data-i="'+i+'" data-k="f.'+k+'">'+arr.map(function(x){return '<option value="'+x[0]+'"'+(String(x[0])===String(f[k])?' selected':'')+'>'+esc(tr(x[1]))+'</option>'}).join('')+'</select>';};
  var ck=function(sd){return CK.map(function(c){return '<label class="ck"><input type="checkbox" data-i="'+i+'" data-k="f.'+c[0]+sd+'"'+(f[c[0]+sd]?' checked':'')+'> '+tr(c[1])+'</label>'}).join('');};
- return '<details class="fld" data-i="'+i+'"'+(g.fOpen?' open':'')+'><summary>'+tr('Field &amp; weather')+esc(fieldSummary(f))+'</summary><div class="g2"><div><label>'+tr('Weather')+'</label>'+dd('weather',WE)+'</div><div><label>'+tr('Terrain')+'</label>'+dd('terrain',TE)+'</div></div><div class="g2"><div><label><b>'+tr('Your side')+'</b></label>'+ck('L')+'</div><div><label><b>'+tr('Opponent’s side')+'</b></label>'+ck('R')+'</div></div></details>';}
+ return '<details class="fld" data-i="'+i+'"'+(g.fOpen?' open':'')+'><summary>'+tr('Field, Weather &amp; Multiplicator')+esc(fieldSummary(f))+'</summary><div class="g2"><div><label>'+tr('Weather')+'</label>'+dd('weather',WE)+'</div><div><label>'+tr('Terrain')+'</label>'+dd('terrain',TE)+'</div></div><div class="g2"><div><label><b>'+tr('Your side')+'</b></label>'+ck('L')+'</div><div><label><b>'+tr('Opponent’s side')+'</b></label>'+ck('R')+'</div></div></details>';}
 function oppHead(g,i){var d=DEX[g.sp],c1=d?TYC[d.t1]:'#8aa',c2=d?TYC[d.t2||d.t1]:'#8aa';
  return '<div class="opp" style="--c1:'+c1+';--c2:'+c2+'"><span class="av lg" data-ini="'+esc((g.sp||'?')[0])+'">'+(d?spriteImg(g.sp,'big',''):'')+'</span><div class="opp-in"><input class="ac" data-ac="mon" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="sp" value="'+esc(g.sp)+'" placeholder="'+esc(tr('Opponent Pokémon'))+'"><div class="tys">'+typeChips(g.sp)+'</div></div></div>';}
 function card(g,i){var T={surv:'🛡️ '+tr('Survive'),ko:'⚔️ '+tr('Get a KO on'),spd:'💨 '+tr('Speed vs')}[g.t];
- var h='<div class="gc t-'+g.t+'"><div class="gh"><b>'+T+'</b><button class="x" data-del="'+i+'">✕</button></div>';
+ var h='<div class="gc t-'+g.t+'" data-card="'+i+'"><div class="gh"><b><span class="ord" title="'+esc(tr('Priority: the first goal counts most'))+'">#'+(i+1)+'</span> '+T+'</b><span class="gb"><span class="mv" draggable="true" data-drag="'+i+'" title="'+esc(tr('Drag to change the priority'))+'" aria-hidden="true">⠿</span><button class="x" data-up="'+i+'"'+(i===0?' disabled':'')+' aria-label="'+esc(tr('Move up (higher priority)'))+'" title="'+esc(tr('Move up (higher priority)'))+'">↑</button><button class="x" data-dn="'+i+'"'+(i===goals.length-1?' disabled':'')+' aria-label="'+esc(tr('Move down (lower priority)'))+'" title="'+esc(tr('Move down (lower priority)'))+'">↓</button><button class="x" data-del="'+i+'">✕</button></span></div>';
  h+=oppHead(g,i)+metaBtn(g,i);
  h+='<div class="g2"><div><label>'+tr('Ability')+'</label><select data-i="'+i+'" data-k="ab">'+abOpts(g.sp,g.ab,true)+'</select></div><div><label>'+tr('Item')+'</label><select data-i="'+i+'" data-k="it"'+(itemLocked(g.sp)?' disabled':'')+'>'+opts(ITL,g.it,tr('(no item)'))+'</select></div></div>';
  if(g.t==='surv')h+=sitBlock(g.ab,g.abOn,g.fainted,{on:'data-i="'+i+'" data-k="abOn"',fa:'data-i="'+i+'" data-k="fainted"'});
  h+='<div class="g2"><div><label>'+tr('Nature')+'</label><select data-i="'+i+'" data-k="na">'+NAT.map(function(n){return '<option value="'+n+'"'+(n===g.na?' selected':'')+'>'+natLab(n)+'</option>'}).join('')+'</select></div><div><label>'+tr('Status')+'</label><select data-i="'+i+'" data-k="st">'+opts(STA,g.st,undefined,tr)+'</select></div></div>';
- if(g.t==='surv')h+='<label>'+tr('Opponent’s move')+'</label><input class="ac" data-ac="move" data-ms="opp" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="mv" value="'+esc(g.mv)+'" placeholder="'+esc(tr('e.g. {0}',['Wood Hammer']))+'"><div class="g2"><div><label>'+tr('Attack points')+'</label>'+num(i,'spA',g.spA)+'</div><div><label>'+tr('Attack boost')+'</label>'+sel(i,'bo',BO,g.bo)+'</div></div>'+moveExtras(g,i);
- if(g.t==='ko')h+='<label>'+tr('Your move')+'</label><input class="ac" data-ac="move" data-ms="me" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="mv" value="'+esc(g.mv)+'" placeholder="'+esc(tr('e.g. {0}',['Flare Blitz']))+'"><p class="mu">'+tr('Your Atk/SpA points: set them in section 1 if you want them fixed (empty = the app finds the minimum).')+'</p><div class="g3"><div><label>HP</label>'+num(i,'hp',g.hp)+'</div><div><label>Def</label>'+num(i,'df',g.df)+'</div><div><label>SpD</label>'+num(i,'sd',g.sd)+'</div></div><div class="g3"><div><label>'+tr('HP left %')+'</label>'+num(i,'pct',g.pct,100)+'</div><div><label>'+tr('Their def boost')+'</label>'+sel(i,'bo',BO,g.bo)+'</div><div><label>'+tr('Your boost')+'</label>'+sel(i,'mbo',BO,g.mbo)+'</div></div>'+moveExtras(g,i)+'<label class="ck"><input type="checkbox" data-i="'+i+'" data-k="hh"'+(g.hh?' checked':'')+'> '+tr('Count Helping Hand (my ally helps)')+'</label>';
+ if(g.t==='surv')h+='<label>'+tr('Opponent’s move')+'</label><input class="ac" data-ac="move" data-ms="opp" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="mv" value="'+esc(g.mv)+'" placeholder="'+esc(tr('e.g. {0}',['Wood Hammer']))+'"><div class="g2"><div><label>'+tr('Attack points')+'</label>'+num(i,'spA',g.spA)+'</div><div><label>'+tr('Attack boost')+'</label>'+sel(i,'bo',BO,g.bo)+'</div></div><div class="g2"><div><label>'+tr('Your Def boost')+'</label>'+sel(i,'db',BO,g.db)+'</div><div><label>'+tr('Your SpD boost')+'</label>'+sel(i,'sb',BO,g.sb)+'</div></div>'+moveExtras(g,i);
+ if(g.t==='ko')h+='<label>'+tr('Your move')+'</label><input class="ac" data-ac="move" data-ms="me" autocomplete="off" autocapitalize="off" spellcheck="false" data-i="'+i+'" data-k="mv" value="'+esc(g.mv)+'" placeholder="'+esc(tr('e.g. {0}',['Flare Blitz']))+'"><p class="mu">'+tr('Your Atk/SpA points: set them in section 1 if you want them fixed (empty = the app finds the minimum).')+'</p><div class="g3"><div><label>HP</label>'+num(i,'hp',g.hp)+'</div><div><label>Def</label>'+num(i,'df',g.df)+'</div><div><label>SpD</label>'+num(i,'sd',g.sd)+'</div></div><div class="g3"><div><label>'+tr('HP left %')+'</label>'+num(i,'pct',g.pct,100)+'</div><div><label>'+tr('Their def boost')+'</label>'+sel(i,'bo',BO,g.bo)+'</div><div><label>'+tr('Your boost')+'</label>'+sel(i,'mbo',BO,g.mbo)+'</div></div>'+moveExtras(g,i);
  if(g.t==='spd')h+='<div class="g2"><div><label>'+tr('Speed points')+'</label>'+num(i,'spe',g.spe)+'</div><div><label>'+tr('Speed boost')+'</label>'+sel(i,'bo',BO,g.bo)+'</div></div><label>'+tr('You want to…')+'</label>'+sel(i,'mode',[['over',N_('Outspeed it')],['under',N_('Stay slower (Trick Room)')]],g.mode);
  if(g.t!=='spd')h+='<label>'+(g.t==='ko'?tr('Chance to KO must be at least'):tr('Chance to survive must be at least'))+'</label>'+sel(i,'thr',THR,g.thr);
- h+=fieldBlock(g,i);h+='<label>'+tr('Priority')+'</label>'+sel(i,'w',[['1000',N_('Required')],['10',N_('Important')],['1',N_('Nice to have')]],g.w);
+ h+=fieldBlock(g,i);
  if(g.t==='surv'&&i>0&&goals[i-1].t==='surv')h+='<label class="ck"><input type="checkbox" data-i="'+i+'" data-k="join"'+(g.join?' checked':'')+'> '+tr('I also take the hit above, same turn')+'</label>';
  return h+'</div>';}
 /* ---------- dati d'uso dei tornei (tutti i Pokémon; dove non so, vuoto) ---------- */
@@ -308,11 +380,16 @@ function fillFromMeta(g){var m=META_BY[g.sp];
  if(m){var s=metaSet(m);g.ab=s.ab;g.it=s.it;if(g.t==='surv'){var mv=dmgMoves(m,1)[0];if(mv){g.mv=mv;g.na=natFor(m,mv);}g.spA=32;}if(g.t==='spd')g.spe=32;}
  else{g.ab=soleAb(g.sp);g.it='';}}
 function applyMeta(i){var g=goals[i];fillFromMeta(g);var bits=[];if(g.ab)bits.push(g.ab);if(g.it)bits.push(g.it);if(g.t==='surv'&&g.mv)bits.push(g.mv);if(g.t==='surv'&&g.na)bits.push(g.na);g.note='✔ '+tr('Filled: {0}. Tournaments do not publish Stat Points, so those stay as you set them.',[bits.join(' · ')||tr('nothing to fill')]);draw();}
-function metaGoals(){var atk=$i('tmOn').checked,spd=$i('tmSpd').checked;if(!atk&&!spd)return[];
+var META_MAX=60;
+function metaGoals(){var atk=$i('tmOn').checked,spd=$i('tmSpd').checked,kod=$i('tmKo').checked;if(!atk&&!spd&&!kod)return[];
  var n=+$i('tmN').value,k=+$i('tmM').value,off=$i('tmNat').value==='off',gs=[],f={weather:$i('tmWe').value,terrain:$i('tmTe').value},RK=[1,.7,.5,.35];
  TOP.slice(0,n).forEach(function(t){var m=META_BY[t.n],s=m?metaSet(m):{ab:soleAb(t.n),it:''};
   if(atk&&m)dmgMoves(m,k).forEach(function(mv,ri){var acc=(MV[mv].acc||100)/100,g=newGoal('surv');g.sp=t.n;g.ab=s.ab;g.it=s.it;g.na=(m.na&&m.na.length)?m.na[0][0]:(off?(MV[mv].category==='Special'?'Modest':'Adamant'):'Hardy');g.mv=mv;g.spA=32;g.thr='1';g.w=String(Math.max(1,Math.round(t.u*10*RK[ri]*acc)));g.f=Object.assign({},f);g.meta=true;gs.push(g);});
+  if(kod&&DEX[t.n]){var kmv=[];goals.forEach(function(g){if(g.t==='ko'&&MV[g.mv]&&MV[g.mv].category!=='Status'&&kmv.indexOf(g.mv)<0&&kmv.length<3)kmv.push(g.mv);});
+   kmv.forEach(function(mv){var g3=newGoal('ko'),ph=MV[mv].category==='Physical'||!!MV[mv].dealsPhysicalDamage;g3.sp=t.n;g3.ab=s.ab;g3.it=s.it;g3.na=(m&&m.na&&m.na.length)?m.na[0][0]:'Hardy';g3.mv=mv;g3.hp=32;g3[ph?'df':'sd']=+$i('tmKb').value;g3.thr=$i('tmKt').value;g3.pct=+$i('tmKp').value;g3.w=String(Math.max(1,Math.round(t.u*10)));g3.f=Object.assign({},f);g3.meta=true;gs.push(g3);});}
   if(spd){var g2=newGoal('spd');g2.sp=t.n;g2.ab=s.ab;g2.it=s.it;g2.na='Hardy';g2.spe=32;g2.w=String(Math.max(1,Math.round(t.u*10)));g2.f=Object.assign({},f);g2.mode='over';g2.meta=true;gs.push(g2);}});
+ /* every meta goal is one more item in the exhaustive search: keep the most used ones so the calculation stays within seconds */
+ if(gs.length>META_MAX){gs=gs.slice(0,META_MAX);gs.cut=true;}
  return gs;}
 /* tabella di tutti i Pokémon */
 function amRender(){var q=$i('amQ').value.trim().toLowerCase(),T=$i('amT'),pc=function(m,k,n){return m.pc&&m.pc[k]&&m.pc[k][n]!==undefined?' '+m.pc[k][n]+'%':'';};
@@ -357,15 +434,25 @@ function cleanGoal(g){if(!g||['surv','ko','spd'].indexOf(g.t)<0)return null;var 
  o.sp=DEX[g.sp]?g.sp:'';o.ab=g.ab&&ABL.indexOf(g.ab)>=0?g.ab:'';o.it=g.it&&ITL.indexOf(g.it)>=0?g.it:'';o.na=pickOf(Object.keys(NATURES),g.na,'Hardy');o.st=pickOf(STA,g.st,'Healthy');
  o.mv=MV[g.mv]?g.mv:'';o.spA=intOf(g.spA,0,32,32);o.hp=intOf(g.hp,0,32,0);o.df=intOf(g.df,0,32,0);o.sd=intOf(g.sd,0,32,0);o.spe=intOf(g.spe,0,32,o.spe);o.pct=intOf(g.pct,0,100,100);
  o.bo=intOf(g.bo,-6,6,0);o.mbo=intOf(g.mbo,-6,6,0);o.hits=intOf(g.hits,0,5,0);o.thr=pickOf(ok(THR),String(g.thr),'1');o.w=pickOf(['1000','10','1'],String(g.w),'10');
- o.mode=pickOf(['over','under'],g.mode,'over');o.join=g.join===true;o.abOn=g.abOn===true;o.fainted=intOf(g.fainted,0,5,0);o.crit=g.crit===true;o.hh=g.hh===true;
+ o.mode=pickOf(['over','under'],g.mode,'over');o.join=g.join===true;o.abOn=g.abOn===true;o.fainted=intOf(g.fainted,0,5,0);o.crit=g.crit===true;o.db=intOf(g.db,-6,6,0);o.sb=intOf(g.sb,-6,6,0);
  o.f={weather:pickOf(ok(WE),f.weather,'auto'),terrain:pickOf(ok(TE),f.terrain,'auto')};
- CK.forEach(function(c){['L','R'].forEach(function(sd){if(f[c[0]+sd]===true)o.f[c[0]+sd]=true;});});return o;}
+ CK.forEach(function(c){['L','R'].forEach(function(sd){if(f[c[0]+sd]===true)o.f[c[0]+sd]=true;});});
+ if(g.hh===true)o.f.helpingHandL=true; /* older saves had a separate "Count Helping Hand" box on KO goals */
+ return o;}
+/* goal order = priority. A Survive goal joined to the one above ("same turn") travels with it, so moves work on blocks. */
+function blocksOf(gs){var b=[];gs.forEach(function(g,i){if(i>0&&g.join&&g.t==='surv'&&gs[i-1].t==='surv'&&b.length)b[b.length-1].push(g);else b.push([g]);});return b;}
+function blockIndex(gs,i){var bl=blocksOf(gs),s=0,k;for(k=0;k<bl.length;k++){if(i>=s&&i<s+bl[k].length)return k;s+=bl[k].length;}return 0;}
+function moveBlock(gs,from,to){var bl=blocksOf(gs),bi=blockIndex(gs,from),bt=Math.max(0,Math.min(bl.length-1,to)),mv=bl.splice(bi,1)[0];if(mv[0].join)mv[0].join=false;bl.splice(bt,0,mv);return [].concat.apply([],bl);}
+/* same order, priority weights for the Resistance mode: the first goal weighs most (tournament-meta goals keep their usage weight) */
+function ranked(gs){return gs.map(function(g,i){return g.meta?g:Object.assign({},g,{w:String(gs.length-i)});});}
+/* saves from before the priority list (no o:2) carried Required / Important / Nice to have in w: turn it into an order, keeping joined goals together */
+function legacyOrder(gs){var bl=blocksOf(gs).map(function(b,i){return{b:b,i:i,w:+b[0].w||0};});bl.sort(function(x,y){return y.w-x.w||x.i-y.i;});return [].concat.apply([],bl.map(function(x){return x.b;}));}
 function cleanState(raw){if(!raw||typeof raw!=='object'||raw.v!==1)return null;var m=raw.m||{},t=raw.t||{},lk={};
  ['hp','at','df','sa','sd','sp'].forEach(function(k){var v=m.lk&&m.lk[k];lk[k]=v===''||v==null?'':intOf(v,0,32,'');});
  var sp=DEX[m.sp]?m.sp:'Incineroar';
- return{v:1,m:{sp:sp,ab:m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab,it:m.it&&ITL.indexOf(m.it)>=0?m.it:'',na:m.na==='*'?'*':pickOf(Object.keys(NATURES),m.na,'*'),st:pickOf(STA,m.st,'Healthy'),fm:pickOf(['smart','bulk','resist','offense','speed','none'],m.fm,'smart'),abOn:m.abOn===true&&!!SIT[m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab],fainted:intOf(m.fainted,0,5,0),ho:(Array.isArray(m.ho)?m.ho:[]).filter(function(k,i,a){return HPOPT.some(function(r){return r[0]===k})&&a.indexOf(k)===i}).filter(function(k,i,a){return !(k==='minhp'&&a.indexOf('maxhp')>=0)}),lk:lk},
-  t:{on:t.on===true,spd:t.spd===true,n:pickOf(['5','8','10','12','15','20','25','40','60'],String(t.n),'12'),m:pickOf(['1','2','3'],String(t.m),'2'),nat:pickOf(['off','neu'],t.nat,'off'),we:pickOf(WE.map(function(x){return x[0]}),t.we,'auto'),te:pickOf(TE.map(function(x){return x[0]}),t.te,'auto'),b:pickOf(['12','24','36','66'],String(t.b),'24')},
-  g:(Array.isArray(raw.g)?raw.g.slice(0,30):[]).map(cleanGoal).filter(Boolean)};}
+ return{v:1,m:{sp:sp,ab:m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab,it:m.it&&ITL.indexOf(m.it)>=0?m.it:'',na:m.na==='*'?'*':pickOf(Object.keys(NATURES),m.na,'*'),st:pickOf(STA,m.st,'Healthy'),fm:pickOf(['smart','bulk','resist','offense','speed','none'],m.fm,'smart'),pm:pickOf(['min','perfect'],m.pm,'min'),abOn:m.abOn===true&&!!SIT[m.ab&&ABL.indexOf(m.ab)>=0?m.ab:DEX[sp].ab],fainted:intOf(m.fainted,0,5,0),ho:(Array.isArray(m.ho)?m.ho:[]).filter(function(k,i,a){return HPOPT.some(function(r){return r[0]===k})&&a.indexOf(k)===i}).filter(function(k,i,a){return !(k==='minhp'&&a.indexOf('maxhp')>=0)}),lk:lk},
+  t:{on:t.on===true,spd:t.spd===true,ko:t.ko===true,kb:pickOf(['0','16','32'],String(t.kb),'16'),kt:pickOf(['1','0.5','0.25'],String(t.kt),'1'),kp:pickOf(['100','75','50','33'],String(t.kp),'50'),n:pickOf(['5','8','10','12','15','20','25','40','60'],String(t.n),'12'),m:pickOf(['1','2','3'],String(t.m),'2'),nat:pickOf(['off','neu'],t.nat,'off'),we:pickOf(WE.map(function(x){return x[0]}),t.we,'auto'),te:pickOf(TE.map(function(x){return x[0]}),t.te,'auto'),b:pickOf(['12','24','36','66'],String(t.b),'24')},
+  g:(function(gs){return raw.o===2?gs:legacyOrder(gs);})((Array.isArray(raw.g)?raw.g.slice(0,30):[]).map(cleanGoal).filter(Boolean)),o:2};}
 function encodeShare(st){return b64enc(JSON.stringify(st));}
 function decodeShare(txt){try{return cleanState(JSON.parse(b64dec(txt)));}catch(e){return null;}}
 /* Pokémon Showdown import text. In Showdown's Champions format the EVs line holds Stat Points directly (0-32 per stat). */
@@ -402,16 +489,24 @@ var drawing=false;
 function draw(){drawing=true;try{drawCards();}finally{drawing=false;}}
 function drawCards(){$i('goals').innerHTML=goals.length?goals.map(card).join(''):'<p class="mu">'+tr('Add at least one goal with the buttons below.')+'</p>';a11yLabels();}
 $i('goals').onchange=function(e){if(drawing)return;var t=e.target,i=t.dataset.i;if(i===undefined)return;var g=goals[i],k=t.dataset.k,prevSp=g.sp;
- if(k.indexOf('f.')===0){g.f=g.f||newField();g.f[k.slice(2)]=t.type==='checkbox'?t.checked:t.value;var dt=t.closest('details'),sm=dt&&dt.querySelector('summary');if(sm)sm.innerHTML=tr('Field &amp; weather')+esc(fieldSummary(g.f));return;}
+ if(k.indexOf('f.')===0){g.f=g.f||newField();g.f[k.slice(2)]=t.type==='checkbox'?t.checked:t.value;var dt=t.closest('details'),sm=dt&&dt.querySelector('summary');if(sm)sm.innerHTML=tr('Field, Weather &amp; Multiplicator')+esc(fieldSummary(g.f));return;}
  if(t.type==='checkbox'){g[k]=t.checked;draw();return;}
- var v=t.value;if(['spA','hp','df','sd','spe','pct'].indexOf(k)>=0)v=Math.max(0,Math.min(k==='pct'?100:32,+v||0));if(k==='bo'||k==='mbo')v=+v;g[k]=v;
+ var v=t.value;if(['spA','hp','df','sd','spe','pct'].indexOf(k)>=0)v=Math.max(0,Math.min(k==='pct'?100:32,+v||0));if(k==='bo'||k==='mbo'||k==='db'||k==='sb')v=+v;g[k]=v;
  if(k==='sp'){if(DEX[v]&&v!==prevSp){var nd=newGoal(g.t);g.ab='';g.it='';g.na='Hardy';g.st='Healthy';g.spA=nd.spA;g.hp=nd.hp;g.df=nd.df;g.sd=nd.sd;g.spe=nd.spe;g.bo=0;g.mbo=0;g.abOn=false;g.fainted=0;g.note='';fillFromMeta(g);}draw();}
  if(k==='fainted')g.fainted=Math.max(0,Math.min(5,+v||0));
  if(k==='ab'){g.abOn=false;draw();}
  if(k==='mv'){draw();}
 };
 $i('goals').addEventListener('toggle',function(e){var d=e.target;if(d.classList&&d.classList.contains('fld')&&goals[d.dataset.i])goals[d.dataset.i].fOpen=d.open;},true);
-$i('goals').onclick=function(e){var mi=e.target.dataset.meta;if(mi!==undefined){applyMeta(+mi);return;}var d=e.target.dataset.del;if(d===undefined)return;goals.splice(+d,1);draw();};
+$i('goals').onclick=function(e){var mi=e.target.dataset.meta;if(mi!==undefined){applyMeta(+mi);return;}
+ var up=e.target.dataset.up,dn=e.target.dataset.dn;
+ if(up!==undefined||dn!==undefined){var i=+(up!==undefined?up:dn),h=goals[i];goals=moveBlock(goals,i,blockIndex(goals,i)+(up!==undefined?-1:1));draw();var nb=document.querySelector('[data-'+(up!==undefined?'up':'dn')+'="'+goals.indexOf(h)+'"]');if(nb)nb.focus();return;}
+ var d=e.target.dataset.del;if(d===undefined)return;goals.splice(+d,1);draw();};
+var dragFrom=null;
+$i('goals').addEventListener('dragstart',function(e){var h=e.target.closest&&e.target.closest('[data-drag]');if(!h)return;dragFrom=+h.dataset.drag;try{e.dataTransfer.setData('text/plain',String(dragFrom));e.dataTransfer.effectAllowed='move';var c=h.closest('.gc');if(c&&e.dataTransfer.setDragImage)e.dataTransfer.setDragImage(c,20,20);}catch(x){}});
+$i('goals').addEventListener('dragover',function(e){if(dragFrom===null)return;var c=e.target.closest&&e.target.closest('.gc');if(c){e.preventDefault();document.querySelectorAll('.gc.over').forEach(function(x){x.classList.remove('over')});c.classList.add('over');}});
+$i('goals').addEventListener('drop',function(e){if(dragFrom===null)return;var c=e.target.closest&&e.target.closest('.gc');e.preventDefault();if(c)goals=moveBlock(goals,dragFrom,blockIndex(goals,+c.dataset.card));dragFrom=null;draw();});
+$i('goals').addEventListener('dragend',function(){dragFrom=null;document.querySelectorAll('.gc.over').forEach(function(x){x.classList.remove('over')});});
 $i('addSurv').onclick=function(){goals.push(newGoal('surv'));draw();};
 $i('addKo').onclick=function(){goals.push(newGoal('ko'));draw();};
 $i('addSpd').onclick=function(){goals.push(newGoal('spd'));draw();};
@@ -423,11 +518,12 @@ function oppCfg(g){var sp={hp:0,at:0,df:0,sa:0,sd:0,sp:0},bo={};
 function err(m){var r=$i('res');r.hidden=false;r.innerHTML='<p class="bad">'+m+'</p>';}
 function fail(m){err(m);return null;}
 function gather(){
- var M={name:$i('mSp').value.trim(),ability:$i('mAb').value,item:$i('mIt').value,nature:$i('mNa').value,status:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,hpOpt:hpOptSel(),lock:{}};
+ var M={name:$i('mSp').value.trim(),ability:$i('mAb').value,item:$i('mIt').value,nature:$i('mNa').value,status:$i('mSt').value,fm:$i('fm').value,pm:$i('pm').value,abOn:mySit.on,fainted:mySit.fa,hpOpt:hpOptSel(),lock:{}};
  var lsum=0;['hp','at','df','sa','sd','sp'].forEach(function(k){var v=$i('lk_'+k).value;M.lock[k]=v===''?null:Math.max(0,Math.min(32,+v||0));lsum+=M.lock[k]||0;});
  if(lsum>66)return fail(tr('The fixed points add up to more than 66.'));
  if(!DEX[M.name])return fail(tr('Pick a valid Pokémon for your own Pokémon (choose from the list).'));
- if(!goals.length&&!$i('tmOn').checked&&!$i('tmSpd').checked)return fail(tr('Add at least one goal, or turn on one of the tournament meta options.'));
+ if($i('tmKo').checked&&!goals.some(function(g){return g.t==='ko'}))return fail(tr('Tournament-meta KOs use the moves of your “Get a KO” goals: add one first.'));
+ if(!goals.length&&!$i('tmOn').checked&&!$i('tmSpd').checked&&!$i('tmKo').checked)return fail(tr('Add at least one goal, or turn on one of the tournament meta options.'));
  for(var i=0;i<goals.length;i++){var g=goals[i],n=i+1;
   if(!DEX[g.sp])return fail(tr('Goal {0}: pick an opponent Pokémon from the list.',[n]));
   if(g.t!=='spd'&&!MV[g.mv])return fail(tr('Goal {0}: pick a move from the list.',[n]));
@@ -440,15 +536,15 @@ $i('go').onclick=async function(){
  btn.disabled=true;res.hidden=false;
  var say=function(m){res.innerHTML='<p class="mu"><span class="spin"></span> '+m+'</p>'};
  try{var t0=Date.now(),mg=metaGoals(),r;
-  if(mg.length){var B=+$i('tmB').value,r0=goals.length?await solve(M,goals,{},say):null,base=r0?r0.top.tot:0,lim=B>=66?66:Math.max(base,Math.min(66,base+B));
-   r=await solve(M,goals.concat(mg),{},say,{limit:lim});if(r){r.metaBase=base;r.metaLimit=B;}}
-  else r=await solve(M,goals,{},say);
+  if(mg.length){var B=+$i('tmB').value,r0=goals.length?await solve(M,ranked(goals),{},say,{mode:'min'}):null,base=r0?r0.top.tot:0,lim=B>=66?66:Math.max(base,Math.min(66,base+B));
+   r=await solve(M,ranked(goals).concat(mg),{},say,{limit:lim});if(r){r.metaBase=base;r.metaLimit=B;r.metaCut=!!mg.cut;}}
+  else r=await solve(M,ranked(goals),{},say);
   if(!r)err(tr('I could not find any possible spread.'));else show(r,M,Date.now()-t0);}
  catch(e){err(tr('Calculation error: {0}',[esc(e.message)]));console.error(e);}
  btn.disabled=false;};
 $i('check').onclick=function(){var M=gather();if(!M)return;if(M.nature==='*')return err(tr('Choose a nature (not “Auto”) to check a spread.'));
  var S={};['hp','at','df','sa','sd','sp'].forEach(function(k){S[k]=M.lock[k]||0});
- try{$i('res').hidden=false;show(checkSpread(M,goals.concat(metaGoals()),S,M.nature),M,0);}catch(e){err(tr('Calculation error: {0}',[esc(e.message)]));console.error(e);}};
+ try{$i('res').hidden=false;show(checkSpread(M,ranked(goals).concat(metaGoals()),S,M.nature),M,0);}catch(e){err(tr('Calculation error: {0}',[esc(e.message)]));console.error(e);}};
 function ruler(S,K){var c='',n=0;K.forEach(function(k,ki){for(var i=0;i<S[k];i++){c+='<i class="c'+ki+'" style="--d:'+(n++*12)+'ms"></i>';}});for(;n<66;n++)c+='<i class="f"></i>';return '<div class="ruler">'+c+'</div>';}
 var NM={hp:'HP',at:'Atk',df:'Def',sa:'SpA',sd:'SpD',sp:'Spe'};
 var LAST=null;
@@ -466,21 +562,21 @@ function whyHtml(r,M){var K=['hp','at','df','sa','sd','sp'],rows=K.filter(functi
  return rows.length?'<details class="why"><summary>'+tr('Why these points?')+'</summary><ul style="margin:6px 0 0 18px;padding:0">'+rows.join('')+'</ul></details>':'';}
 var LASTSHOW=null;
 /* quiet = redraw in place (language change) without scrolling to the result */
-function show(r,M,ms,quiet){var K=['hp','at','df','sa','sd','sp'],mineG=r.goals.filter(function(g){return !g.meta}),metaG=r.goals.filter(function(g){return g.meta}),badAll=mineG.filter(function(g){return !g.ok}),h='<h2>'+tr(r.check?(badAll.length?N_('Your spread: some goals fail'):N_('Your spread: every goal works')):badAll.length?N_('Best spread found'):N_('Minimum spread found'))+'</h2>'+resTop(r,M)+ruler(r.S,K)+'<div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S[k]+'</b><span>'+NM[k]+'</span><i>'+r.stats[k]+'</i></div>'}).join('')+'</div>';
+function show(r,M,ms,quiet){var K=['hp','at','df','sa','sd','sp'],mineG=r.goals.filter(function(g){return !g.meta}),metaG=r.goals.filter(function(g){return g.meta}),badAll=mineG.filter(function(g){return !g.ok}),h='<h2>'+tr(r.check?(badAll.length?N_('Your spread: some goals fail'):N_('Your spread: every goal works')):badAll.length?N_('Best spread found'):(r.mode==='perfect'?N_('Perfect spread found'):N_('Minimum spread found')))+'</h2>'+resTop(r,M)+ruler(r.S,K)+'<div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S[k]+'</b><span>'+NM[k]+'</span><i>'+r.stats[k]+'</i></div>'}).join('')+'</div>';
  if(!r.check)h+=whyHtml(r,M);
  if(r.check&&r.free>0)h+='<p class="mu">'+tr('Points not used: {0} of 66.',[r.free])+'</p>';
  if(!r.check&&r.free>0){h+='<p><b>'+tr('Free points left: {0}',[r.free])+'</b> <span class="mu">('+tr('you are not forced to use them')+')</span></p><p class="mu">'+tr('Suggested way to spend them ({0} stay free):',[r.left===undefined?r.free:r.left])+'</p><div class="sp">'+K.map(function(k,i){return '<div class="s'+i+'"><b>'+r.S1[k]+'</b><span>'+NM[k]+'</span></div>'}).join('')+'</div>'+(r.why&&r.why.length?'<ul class="mu" style="margin:6px 0 0 18px;padding:0">'+r.why.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'');}
  if(r.effort&&r.effort.length)h+='<p class="mu">'+tr('Extra points put toward goals that could not be fully reached: {0}.',[r.effort.map(function(e){return NM[e.k]+' +'+e.n+' ('+esc(e.label)+')'}).join(', ')])+'</p>';
  var bad=badAll,hardBad=bad.filter(function(g){return !(g.hh&&g.hh.ok)});
- h+=!mineG.length?'':!bad.length?'<p class="ok">'+tr('All goals are satisfied!')+' 🎉</p>':(r.check?'<p class="bad">'+tr('This spread does not meet every goal. ❌ marks the ones that fail.')+'</p>':hardBad.length?'<p class="bad">'+tr('I could not satisfy every goal: I gave up the least important ones first and put the extra points toward the closest ones.')+'</p>':'<p class="ok">'+tr('Every goal works. 🤝 marks the ones that need Helping Hand.')+'</p>');
+ h+=!mineG.length?'':!bad.length?'<p class="ok">'+tr('All goals are satisfied!')+' 🎉</p>':(r.check?'<p class="bad">'+tr('This spread does not meet every goal. ❌ marks the ones that fail.')+'</p>':hardBad.length?'<p class="bad">'+tr('I could not satisfy every goal: I gave up the ones lower in your list first.')+'</p>':'<p class="ok">'+tr('Every goal works. 🤝 marks the ones that need Helping Hand.')+'</p>');
  var ptsLab=function(n){return n>32?tr('not reachable'):String(n)},ptsRow=function(g){var q=g.pts;if(!q)return '';return '<br><span class="mu">'+tr('Minimum {0} points: {1} without Helping Hand · {2} with it',[NM[q.k],ptsLab(q.no),ptsLab(q.hh)])+(q.no<=32&&q.hh<q.no?' '+tr('(saves {0})',[q.no-q.hh]):'')+'</span>';};
  var rowH=function(g){var v=g.t==='spd'?tr('you {0} · them {1}',[g.my,g.opp]):g.lo.toFixed(1)+'–'+g.hi.toFixed(1)+'% · '+(g.p*100).toFixed(g.p===1||g.p===0?0:1)+'%';
-  return '<tr><td>'+(g.ok?'✅':(g.hh&&g.hh.ok?'🤝':'❌'))+' '+esc(g.label)+(g.desc?'<br><span class="mu">'+esc(g.desc)+'</span>':'')+ptsRow(g)+(g.hh?'<br><span class="mu">'+tr('With Helping Hand:')+' '+g.hh.lo.toFixed(1)+'–'+g.hh.hi.toFixed(1)+'% · '+(g.hh.p*100).toFixed(g.hh.p===1||g.hh.p===0?0:1)+'% '+(g.hh.ok?'✅':'❌')+'</span>':'')+'</td><td>'+v+'</td></tr>'};
+  return '<tr><td>'+(g.ok?'✅':(g.hh&&g.hh.ok?'🤝':'❌'))+' '+(g.meta?'':'<b>#'+(g.ix+1)+'</b> ')+esc(g.label)+(g.desc?'<br><span class="mu">'+esc(g.desc)+'</span>':'')+ptsRow(g)+(g.hh?'<br><span class="mu">'+tr('With Helping Hand:')+' '+g.hh.lo.toFixed(1)+'–'+g.hh.hi.toFixed(1)+'% · '+(g.hh.p*100).toFixed(g.hh.p===1||g.hh.p===0?0:1)+'% '+(g.hh.ok?'✅':'❌')+'</span>':'')+'</td><td>'+v+'</td></tr>'};
  var metaHtml='';
- if(metaG.length){var ms=metaG.filter(function(g){return g.t==='surv'}),mp=metaG.filter(function(g){return g.t==='spd'}),wt=function(a){return a.reduce(function(t,g){return t+g.w},0)},wok=function(a){return wt(a.filter(function(g){return g.ok}))};
-  metaHtml='<h2>'+tr('Tournament meta')+'</h2><p>'+(ms.length?tr('Survives <b>{0} of {1}</b> of the most used attacks (<b>{2}%</b> of the usage weight)',[ms.filter(function(g){return g.ok}).length,ms.length,Math.round(wok(ms)/wt(ms)*100)]):'')+(mp.length?(ms.length?' · '+tr('outspeeds <b>{0} of {1}</b> top Pokémon (<b>{2}%</b> of the usage weight)',[mp.filter(function(g){return g.ok}).length,mp.length,Math.round(wok(mp)/wt(mp)*100)]):tr('Outspeeds <b>{0} of {1}</b> top Pokémon (<b>{2}%</b> of the usage weight)',[mp.filter(function(g){return g.ok}).length,mp.length,Math.round(wok(mp)/wt(mp)*100)])):'')+'.'+(r.metaBase!==undefined?' '+tr('The meta used <b>{0}</b> extra points (limit: {1}).',[Math.max(0,r.top.tot-r.metaBase),r.metaLimit>=66?tr('none'):tr('up to {0}',[r.metaLimit])]):'')+'</p><details><summary>'+tr('See each one')+'</summary><table>'+metaG.map(rowH).join('')+'</table></details>';}
+ if(metaG.length){var mk=metaG.filter(function(g){return g.t==='ko'}),ms=metaG.filter(function(g){return g.t==='surv'}),mp=metaG.filter(function(g){return g.t==='spd'}),wt=function(a){return a.reduce(function(t,g){return t+g.w},0)},wok=function(a){return wt(a.filter(function(g){return g.ok}))};
+  metaHtml='<h2>'+tr('Tournament meta')+'</h2><p>'+(ms.length?tr('Survives <b>{0} of {1}</b> of the most used attacks (<b>{2}%</b> of the usage weight)',[ms.filter(function(g){return g.ok}).length,ms.length,Math.round(wok(ms)/wt(ms)*100)]):'')+(mp.length?(ms.length?' · '+tr('outspeeds <b>{0} of {1}</b> top Pokémon (<b>{2}%</b> of the usage weight)',[mp.filter(function(g){return g.ok}).length,mp.length,Math.round(wok(mp)/wt(mp)*100)]):tr('Outspeeds <b>{0} of {1}</b> top Pokémon (<b>{2}%</b> of the usage weight)',[mp.filter(function(g){return g.ok}).length,mp.length,Math.round(wok(mp)/wt(mp)*100)])):'')+(mk.length?(ms.length||mp.length?' · '+tr('knocks out <b>{0} of {1}</b> of the most used Pokémon (<b>{2}%</b> of the usage weight)',[mk.filter(function(g){return g.ok}).length,mk.length,Math.round(wok(mk)/wt(mk)*100)]):tr('Knocks out <b>{0} of {1}</b> of the most used Pokémon (<b>{2}%</b> of the usage weight)',[mk.filter(function(g){return g.ok}).length,mk.length,Math.round(wok(mk)/wt(mk)*100)])):'')+'.'+(r.metaBase!==undefined?' '+tr('The meta used <b>{0}</b> extra points (limit: {1}).',[Math.max(0,r.top.tot-r.metaBase),r.metaLimit>=66?tr('none'):tr('up to {0}',[r.metaLimit])]):'')+(r.metaCut?' '+tr('Only the {0} most used goals of the meta are used, to keep the calculation fast.',[META_MAX]):'')+'</p><details><summary>'+tr('See each one')+'</summary><table>'+metaG.map(rowH).join('')+'</table></details>';}
  h+=(mineG.length?'<h2>'+tr('Goals')+'</h2><table>'+mineG.map(rowH).join('')+'</table>':'')+metaHtml;
- if(r.alts.length)h+='<h2>'+tr('Other natures')+'</h2><p class="mu">'+r.alts.map(function(a){return natLab(a.n)+' ('+(a.W===r.top.W&&a.C===r.top.C?tr('same result'):tr('meets fewer goals'))+')'}).join(' · ')+'</p>';
+ if(r.alts.length)h+='<h2>'+tr('Other natures')+'</h2><p class="mu">'+r.alts.map(function(a){return natLab(a.n)+' ('+(a.same?tr('same result'):(a.sig===r.top.sig?tr('same goals, smaller margins'):tr('meets fewer goals')))+')'}).join(' · ')+'</p>';
  h+=exportHtml(r,M);
  h+='<p class="mu">'+tr('Calculated in {0} s with the EVSmith damage engine.',[(ms/1000).toFixed(1)])+'</p>';
  $i('res').innerHTML=h;LASTSHOW={r:r,M:M,ms:ms};if(!quiet&&$i('res').scrollIntoView)$i('res').scrollIntoView({behavior:'smooth'});}
@@ -513,12 +609,12 @@ $i('impBtn').onclick=function(){var o=parseShowdownSet($i('impTxt').value),msg=$
 /* ---------- saved state, share link, export (DOM side) ---------- */
 var LS_KEY='evsmith.state.v1',toolT=null;
 function readState(){var lk={};['hp','at','df','sa','sd','sp'].forEach(function(k){lk[k]=$i('lk_'+k).value;});
- return{v:1,m:{sp:$i('mSp').value.trim(),ab:$i('mAb').value,it:$i('mIt').value,na:$i('mNa').value,st:$i('mSt').value,fm:$i('fm').value,abOn:mySit.on,fainted:mySit.fa,ho:hpOptSel(),lk:lk},
-  t:{on:$i('tmOn').checked,spd:$i('tmSpd').checked,n:$i('tmN').value,m:$i('tmM').value,nat:$i('tmNat').value,we:$i('tmWe').value,te:$i('tmTe').value,b:$i('tmB').value},
+ return{v:1,o:2,m:{sp:$i('mSp').value.trim(),ab:$i('mAb').value,it:$i('mIt').value,na:$i('mNa').value,st:$i('mSt').value,fm:$i('fm').value,pm:$i('pm').value,abOn:mySit.on,fainted:mySit.fa,ho:hpOptSel(),lk:lk},
+  t:{on:$i('tmOn').checked,spd:$i('tmSpd').checked,ko:$i('tmKo').checked,kb:$i('tmKb').value,kt:$i('tmKt').value,kp:$i('tmKp').value,n:$i('tmN').value,m:$i('tmM').value,nat:$i('tmNat').value,we:$i('tmWe').value,te:$i('tmTe').value,b:$i('tmB').value},
   g:goals.map(function(g){var o={};Object.keys(g).forEach(function(k){if(k!=='fOpen'&&k!=='note')o[k]=g[k]});return o;})};}
 function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;drawShowcase();$i('mAb').innerHTML=abOpts(m.sp,m.ab);$i('mIt').disabled=itemLocked(m.sp);$i('mIt').value=m.it;mySit.on=m.abOn;mySit.fa=m.fainted;drawMySit();document.querySelectorAll('[data-hpopt]').forEach(function(x){x.checked=m.ho.indexOf(x.dataset.hpopt)>=0});hpOptSum();
- $i('mNa').value=m.na;$i('mSt').value=m.st;$i('fm').value=m.fm;['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value=m.lk[k];});
- $i('tmOn').checked=t.on;$i('tmSpd').checked=t.spd;$i('tmN').value=t.n;$i('tmM').value=t.m;$i('tmNat').value=t.nat;$i('tmWe').value=t.we;$i('tmTe').value=t.te;$i('tmB').value=t.b;goals=st.g;draw();}
+ $i('mNa').value=m.na;$i('mSt').value=m.st;$i('fm').value=m.fm;$i('pm').value=m.pm;['hp','at','df','sa','sd','sp'].forEach(function(k){$i('lk_'+k).value=m.lk[k];});
+ $i('tmOn').checked=t.on;$i('tmSpd').checked=t.spd;$i('tmKo').checked=t.ko;$i('tmKb').value=t.kb;$i('tmKt').value=t.kt;$i('tmKp').value=t.kp;$i('tmN').value=t.n;$i('tmM').value=t.m;$i('tmNat').value=t.nat;$i('tmWe').value=t.we;$i('tmTe').value=t.te;$i('tmB').value=t.b;goals=st.g;draw();}
 function saveLocal(){try{window.localStorage.setItem(LS_KEY,JSON.stringify(readState()));}catch(e){}}
 function queueSave(){clearTimeout(toolT);toolT=setTimeout(saveLocal,300);}
 function say2(msg){var el=$i('toolMsg');el.textContent=msg;clearTimeout(say2.t);say2.t=setTimeout(function(){el.textContent='';},3500);}

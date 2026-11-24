@@ -13,14 +13,14 @@
 </head>
 <body>
 <header class="stage" id="stage"><div class="stage-in"><div class="hero"><svg viewBox="0 0 100 100" role="img" aria-label="EVSmith"><title>EVSmith</title><polygon points="50,50 50,6 88.1,28" style="fill:var(--s0);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,28 88.1,72" style="fill:var(--s1);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,72 50,94" style="fill:var(--s2);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 50,94 11.9,72" style="fill:var(--s3);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,72 11.9,28" style="fill:var(--s4);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,28 50,6" style="fill:var(--s5);stroke:var(--bg);stroke-width:2.5"/></svg><h1>EVSmith</h1></div>
-<p class="tag" data-i18n>Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it with the fewest points.</p>
+<p class="tag" data-i18n>Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it: with the fewest points, or the best margins.</p>
 <a class="stage-go" href="#app" data-i18n>Start</a></div>
 <div class="stage-3d" id="stage3d"></div><p class="stage-hint" id="stageHint" data-i18n>Drag to rotate</p>
 <span class="sr" id="stageAlt" data-i18n>Interactive 3D model of Garchomp. Drag it to turn it, or use the left and right arrow keys.</span></header>
 <script>(function(){var d=document.documentElement,p=location.protocol;if(p!=="http:"&&p!=="https:")return;d.classList.add("has-stage");function off(){d.classList.remove("has-stage")}import("./hero/hero.js").then(function(m){return m.mount(document.getElementById("stage3d"),{url:"hero/garchomp.glb",labelId:"stageAlt",onLost:off})}).catch(off)})();</script>
 <main id="app">
 <header class="top"><div class="top-in"><div class="hero"><svg viewBox="0 0 100 100" role="img" aria-label="EVSmith"><title>EVSmith</title><polygon points="50,50 50,6 88.1,28" style="fill:var(--s0);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,28 88.1,72" style="fill:var(--s1);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 88.1,72 50,94" style="fill:var(--s2);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 50,94 11.9,72" style="fill:var(--s3);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,72 11.9,28" style="fill:var(--s4);stroke:var(--bg);stroke-width:2.5"/><polygon points="50,50 11.9,28 50,6" style="fill:var(--s5);stroke:var(--bg);stroke-width:2.5"/></svg><h1>EVSmith</h1></div>
-<p class="tag" data-i18n>Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it with the fewest points.</p></div><div class="hero-art" id="heroArt" aria-hidden="true"></div></header>
+<p class="tag" data-i18n>Say what your Pokémon must survive, beat and outspeed. EVSmith builds the 66-point spread that does it: with the fewest points, or the best margins.</p></div><div class="hero-art" id="heroArt" aria-hidden="true"></div></header>
 
 <div class="layout">
 <div class="col-in">
@@ -32,11 +32,11 @@
 <li><span data-i18n><b>Goals.</b> Add as many as you need:</span>
 <ul>
 <li><b>Survive</b>: an opponent, its move, its attack points and boost, and the minimum chance you want to survive. “I also take the hit above, same turn” adds two attacks in the same turn.</li>
-<li data-i18n><b>Get a KO</b>: your move against an opponent whose HP, Def and SpD points you set. “HP left %” lets you ask for a partial KO (for example 50%). Tick “Count Helping Hand” if your ally will help.</li>
+<li data-i18n><b>Get a KO</b>: your move against an opponent whose HP, Def and SpD points you set. “HP left %” lets you ask for a partial KO (for example 50%). For Helping Hand, tick it in the goal’s “Field, Weather &amp; Multiplicator” box; otherwise EVSmith only tells you when it would give the KO.</li>
 <li data-i18n><b>Speed</b>: outspeed an opponent, or stay slower than it (Trick Room).</li>
 </ul>
-<span data-i18n>Each goal has its own “Field &amp; weather” box: weather, terrain, Tailwind, Reflect, Light Screen, Aurora Veil, Friend Guard and Helping Hand, separately for your side and the opponent’s. “Auto” reads the weather and terrain from the abilities on the field (if both sides set one, the slower Pokémon’s wins, as in battle).</span></li>
-<li data-i18n><b>Priority.</b> If not everything fits in 66 points, EVSmith drops the “Nice to have” goals first, then “Important”, and keeps “Required” as long as it can.</li>
+<span data-i18n>Each goal has its own “Field, Weather &amp; Multiplicator” box: weather, terrain, Tailwind, Reflect, Light Screen, Aurora Veil, Friend Guard and Helping Hand, separately for your side and the opponent’s. “Auto” reads the weather and terrain from the abilities on the field (if both sides set one, the slower Pokémon’s wins, as in battle).</span></li>
+<li data-i18n><b>Priority.</b> The goals are ranked by their order: the first counts most. Drag the ⠿ handle or use ↑ ↓ to change it. If not everything fits in 66 points, EVSmith drops the goals lower in the list first and shows which ones are met.</li>
 <li data-i18n><b>Tournament meta (optional).</b> Adds goals built from the most used Pokémon in tournaments: surviving their best attacks and/or outspeeding them. Your own goals always come first; the meta only uses the extra points you allow. The button “Use the most used tournament set” in a goal fills ability, item, move and nature from tournament data.</li>
 <li data-i18n>Press <b>Find the best spread</b>.</li>
 </ol>
@@ -57,7 +57,7 @@
 <h3 data-i18n>Good to know</h3>
 <ul>
 <li data-i18n>The “Where should leftover points go?” list has a <b>Resistance</b> mode: it searches every HP/Def/SpD split of the leftover points and keeps the one with the best average HP margin against the attacks in your Survive goals (and the tournament meta, if on).</li>
-<li data-i18n><b>Extra HP optimizations</b> (section 1) tune the HP stat with leftover points: multiples of 16 for Leftovers-type recovery, 4n for Sitrus Berry, 10n-1 for Life Orb, 4n+1 for Substitute and so on. Max HP and Min HP choose between equal options. Your goals are never weakened.</li>
+<li data-i18n><b>HP Optimizations</b> (section 1), listed by importance, tune the HP stat with leftover points: multiples of 16 for Leftovers-type recovery, 4n for Sitrus Berry, 10n-1 for Life Orb, 4n+1 for Substitute and so on. Max HP and Min HP choose between equal options. Your goals are never weakened.</li>
 <li data-i18n>Level 50, doubles, IVs 31. Spread moves are reduced by 25% (two targets). Critical hits are optional per goal.</li>
 <li data-i18n>On multi-hit moves, Multiscale and damage-reducing berries only work on the first hit.</li>
 <li data-i18n>Weather and terrain in “Auto” come only from abilities that set them when the Pokémon enters (Drought, Drizzle, Sand Stream, Snow Warning and the Surges). Sand Spit and Seed Sower trigger only after being hit, so choose the weather or terrain by hand if you want to assume they are active.</li>
@@ -80,9 +80,12 @@
 <div id="mSit"></div>
 <label data-i18n>Fix some of your points <span class="mu">(empty = the app decides)</span></label>
 <div class="g6"><div><label>HP</label><input type="number" id="lk_hp" min="0" max="32" placeholder="auto" data-i18n-ph></div><div><label data-i18n>Atk</label><input type="number" id="lk_at" min="0" max="32" placeholder="auto" data-i18n-ph></div><div><label data-i18n>Def</label><input type="number" id="lk_df" min="0" max="32" placeholder="auto" data-i18n-ph></div><div><label data-i18n>SpA</label><input type="number" id="lk_sa" min="0" max="32" placeholder="auto" data-i18n-ph></div><div><label data-i18n>SpD</label><input type="number" id="lk_sd" min="0" max="32" placeholder="auto" data-i18n-ph></div><div><label data-i18n>Spe</label><input type="number" id="lk_sp" min="0" max="32" placeholder="auto" data-i18n-ph></div></div>
+<label data-i18n>What should the result be?</label>
+<select id="pm"><option value="min" data-i18n>Minimum points: meet every goal with as few points as possible</option><option value="perfect" data-i18n>Perfect spread: use every point for the best margins</option></select>
+<p class="mu" data-i18n>Goals are ranked by their order in section 2 (the first counts most). “Perfect spread” first meets as many goals as it can in that order, then fits your HP Optimizations (Recovery…), then spends the rest evenly: it keeps lifting the weakest margin (damage taken, damage dealt), so every calculation weighs the same.</p>
 <label data-i18n>Where should leftover points go?</label>
 <select id="fm"><option value="smart" data-i18n>Smart: only where it buys something</option><option value="bulk" data-i18n>Bulk (HP, Def, SpD)</option><option value="resist" data-i18n>Resistance: best against my Survive goals</option><option value="offense" data-i18n>Offense</option><option value="speed" data-i18n>Speed</option><option value="none" data-i18n>Leave them free</option></select>
-<details class="fld" id="hpOpt"><summary><span data-i18n>Extra HP optimizations</span> <span class="mu" id="hpOptSum"></span></summary>
+<details class="fld" id="hpOpt"><summary><span data-i18n>HP Optimizations</span> <span class="mu" id="hpOptSum"></span></summary>
 <p class="mu" data-i18n>Spends leftover points on HP so that your HP stat fits what you tick (n is any whole number). It never takes points from your goals.</p>
 <div id="hpOptList"></div></details>
 <details class="fld" id="impBox"><summary data-i18n>Import a Pokémon Showdown set</summary>
@@ -99,9 +102,12 @@
 
 <div class="card">
 <h2><span class="n">3</span><span data-i18n>Tournament meta (Reg M-C)</span></h2>
-<p class="mu" data-i18n>Two independent options: turn on one, the other, or both.</p>
+<p class="mu" data-i18n>Three independent options: turn on any of them.</p>
 <label class="ck"><input type="checkbox" id="tmOn"> <span data-i18n>Survive the most used attacks in tournaments</span></label>
 <label class="ck"><input type="checkbox" id="tmSpd"> <span data-i18n>Outspeed the most used Pokémon (32 points, neutral nature)</span></label>
+<label class="ck"><input type="checkbox" id="tmKo"> <span data-i18n>Knock out the most used Pokémon with the moves of my “Get a KO” goals</span></label>
+<label data-i18n>Damage to deal to each of them</label><select id="tmKp"><option value="100" data-i18n>100% of their HP (a KO)</option><option value="75" data-i18n>75% of their HP</option><option value="50" selected data-i18n>50% of their HP (a 2HKO)</option><option value="33" data-i18n>33% of their HP</option></select>
+<div class="g2"><div><label data-i18n>Their bulk (HP 32 and…)</label><select id="tmKb"><option value="0" data-i18n>0 points in the stat I hit</option><option value="16" selected data-i18n>16 points in the stat I hit</option><option value="32" data-i18n>32 points in the stat I hit (worst case)</option></select></div><div><label data-i18n>Chance to do it at least</label><select id="tmKt"><option value="1" selected data-i18n>100% (always)</option><option value="0.5" data-i18n>50%</option><option value="0.25" data-i18n>25%</option></select></div></div>
 <div class="g2"><div><label data-i18n>Top Pokémon</label><select id="tmN"><option value="5" data-i18n>Top 5</option><option value="8" data-i18n>Top 8</option><option value="10" data-i18n>Top 10</option><option value="12" selected data-i18n>Top 12</option><option value="15" data-i18n>Top 15</option><option value="20" data-i18n>Top 20</option><option value="25" data-i18n>Top 25</option><option value="40" data-i18n>Top 40</option><option value="60" data-i18n>Top 60</option></select></div><div><label data-i18n>Attacks per Pokémon</label><select id="tmM"><option value="1" data-i18n>1 (most used)</option><option value="2" selected>2</option><option value="3">3</option></select></div></div>
 <label data-i18n>Assume their attackers have…</label><select id="tmNat"><option value="off" data-i18n>32 points + offensive nature (worst case)</option><option value="neu" data-i18n>32 points + neutral nature</option></select>
 <div class="g2"><div><label data-i18n>Weather for the meta</label><select id="tmWe"></select></div><div><label data-i18n>Terrain for the meta</label><select id="tmTe"></select></div></div>
