@@ -2,6 +2,13 @@
 
 All notable changes to EVSmith. Versions follow the Git tags (`vX.Y.Z`).
 
+## 1.6.0
+
+- The page now opens on a home screen with two tools, also from a share link: **EV Builder** (the optimizer, as before) and the new **Teambuilding**.
+- Teambuilding: build a team as in Pokémon Showdown (item, ability, nature, moves, Stat Points), import and export it as Showdown text, and keep several teams, each with its own name.
+- Suggested partners, each with a short reason, once the team has a Pokémon: usage, shared weaknesses, own-type coverage and missing moves. Teammate counts from tournament team lists are not collected yet, so overall usage is used for now.
+- The interface starts in English; Italian is chosen with the 🌐 button and remembered.
+
 ## 1.5.0
 
 - New optimizer: an exhaustive search over every spread (max 32 per stat, 66 points) with a proven result, replacing the old greedy one.

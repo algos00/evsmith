@@ -165,7 +165,7 @@ Notes learned while doing it:
 - `release.yml`: runs on a pushed `v*` tag. Checks that the tag equals `package.json` version, runs `npm run test:full` again,
   builds, creates the GitHub Release with `EVSmith-vX.Y.Z.html` attached, and deploys GitHub Pages when the repository variable
   `PUBLISH_PAGES` is `true` (it is).
-- `update-meta.yml`: Mondays 05:17 UTC (and on demand) refreshes `src/tdata.js` and opens a pull request if it changed. The
+- `update-meta.yml`: Mondays 05:17 UTC (and on demand) refreshes `src/tdata.js` and `src/teamdata.js` and opens a pull request if either changed. The
   PR is opened with the workflow token, so the *Test* workflow does **not** start by itself on it: run the checks (or push an
   empty commit) before merging. Needs *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
   Merging and releasing stay manual.
