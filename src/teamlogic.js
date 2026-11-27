@@ -1,11 +1,11 @@
 /* ---------- Teambuilding: partner suggestions (no DOM access) ---------- */
 /* A team is {slots:[{sp,it,ab,na,mv:[4],pts:{hp..}}]}. Every candidate gets three sub-scores from 0 to 1:
-   meta (how often it is on the same tournament teams), type (shared weaknesses it covers, types it adds attacks against)
+   meta (how often it is on the same tournament teams), type (shared weaknesses it covers, types its own-type attacks add)
    and roles (useful moves the team does not have yet). */
 (function(G){
 'use strict';
 function N_(s){return s;}
-var DEX=G.POKEDEX_CHAMPIONS,MV=G.MOVES_CHAMPIONS,LOCK=G.LOCK_ITEM_LOOKUP,LS=G.LEARNSETS,MN=G.MOVE_NAMES,TD=G.TDATA||{},TYPES=G.ENG.TYPES,te=G.ENG.te;
+var DEX=G.POKEDEX_CHAMPIONS,MV=G.MOVES_CHAMPIONS,LOCK=G.LOCK_ITEM_LOOKUP,LS=G.LEARNSETS,MN=G.MOVE_NAMES,TD=G.TDATA||{},TYPES=G.ENG.TYPES,te=G.ENG.te,ATE=G.ENG.ATE;
 var WEIGHTS={meta:.35,type:.30,roles:.15};
 var ROLES=[
  {id:'speed',w:1,mv:['Tailwind','Trick Room','Icy Wind','Electroweb','Thunder Wave'],why:N_('Adds speed control ({0}), which your team does not have')},
@@ -50,8 +50,12 @@ function profile(n){var key=(DATA?'d':'m')+n;if(PROF[key]&&PROF[key].data===DATA
  return PROF[key]=p;}
 function abShare(n,p,a){if((isMega(n)||DEX[n].abs.length===1)&&DEX[n].ab===a)return 100;return p.ab[a]||0;}
 function mvShare(p,m){return p.mv[m]||0;}
-/* damaging move types a candidate is expected to use */
-function attackTypes(n,p){var o=[];Object.keys(p.mv).forEach(function(m){if(p.mv[m]>=30&&isDamage(m)&&o.indexOf(MV[m].type)<0)o.push(MV[m].type);});return o.length?o:types(n);}
+/* the type a move really has once an ability changes it */
+function moveType(m,ab){var v=MV[m];if(has(ATE,ab)&&v.type==='Normal')return ATE[ab];return ab==='Liquid Voice'&&v.isSound?'Water':v.type;}
+/* A candidate only counts the attacks of its own types: off-type moves would let almost anything hit almost everything.
+   With known sets, it must really use such an attack. */
+function attackTypes(n,p){var own=types(n);if(p.src==='none')return own;
+ return own.filter(function(t){return Object.keys(p.mv).some(function(m){return p.mv[m]>=30&&isDamage(m)&&moveType(m,p.main)===t})});}
 function usage(n){if(TD[n])return TD[n].u;var i=IX[n];return DATA&&i!==undefined&&DATA.n?Math.round((DATA.solo[i]||0)/DATA.n*1000)/10:0;}
 
 /* ---------- the user's team ---------- */
@@ -60,7 +64,7 @@ function members(slots){var out=[];(slots||[]).forEach(function(s){if(!s||!has(D
   out.push({sp:s.sp,name:n,key:baseKey(n),types:types(n),ab:ab,abs:[ab,own].filter(Boolean),mv:mv,it:s.it||''});});return out;}
 function analyse(ms){var weak={},res={},need={},total=0,covered={};
  TYPES.forEach(function(t){weak[t]=0;res[t]=0;ms.forEach(function(m){var x=mult(t,m.types,m.ab);if(x>1)weak[t]++;else if(x<1)res[t]++;});need[t]=weak[t]?Math.max(0,weak[t]-res[t]):0;total+=need[t];});
- ms.forEach(function(m){var at=m.mv.filter(isDamage).map(function(x){return MV[x].type});if(!at.length)at=m.types;
+ ms.forEach(function(m){var at=m.mv.filter(isDamage).map(function(x){return moveType(x,m.ab)});if(!at.length)at=m.types;
   at.forEach(function(a){TYPES.forEach(function(d){if(te(a,d)>1)covered[d]=1;});});});
  return{weak:weak,res:res,need:need,total:total,covered:covered};}
 function hasAny(ms,mv,ab){return ms.some(function(m){return mv.some(function(x){return m.mv.indexOf(x)>=0})||(ab||[]).some(function(a){return m.abs.indexOf(a)>=0})});}
@@ -87,7 +91,8 @@ function typeScore(c,p,T,R){var ab=p.main,ty=types(c),gain=0,pen=0,good=[],imm=[
  var def=clamp(.5+(gain-pen)/(T.total+2)),off=uncovered.length?clamp(fresh.length/Math.min(uncovered.length,4)):0;
  if(imm.length)why(R,'type',def+.05,N_('Immune to {0}, which your team is weak to'),[{types:imm.sort(byNeed).slice(0,3)}]);
  if(good.length)why(R,imm.length?'type2':'type',def,N_('Resists {0}, which your team is weak to'),[{types:good.sort(byNeed).slice(0,3)}]);
- if(fresh.length)why(R,'offense',off*.6,N_('Can hit {0} super effectively, which your team cannot yet'),[{types:fresh.slice(0,3)}]);
+ if(fresh.length){var shown=fresh.slice(0,3),via=at.filter(function(a){return shown.some(function(d){return te(a,d)>1})});
+  why(R,'offense',off*.6,N_('Its {0} attacks can hit {1} super effectively, which your team cannot yet'),[{types:via},{types:shown}]);}
  if(bad.length)why(R,'weak',pen,N_('Adds to your weakness to {0}'),[{types:bad.sort(byNeed).slice(0,3)}],true);
  return .75*def+.25*off;}
 

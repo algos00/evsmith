@@ -4,20 +4,26 @@
 var U=window.EVUI,T=window.TEAM,A=window.ENG,DEX=POKEDEX_CHAMPIONS,tr=U.tr,esc=U.esc;
 function N_(s){return s;}
 function $i(id){return document.getElementById(id);}
-var KEY='evsmith.team.v1',STATS=[['hp','HP'],['at','Atk'],['df','Def'],['sa','SpA'],['sd','SpD'],['sp','Spe']],MAX=6;
-var team={slots:[blank()]},last=[];
+var KEY='evsmith.team.v1',STATS=[['hp','HP'],['at','Atk'],['df','Def'],['sa','SpA'],['sd','SpD'],['sp','Spe']],MAX=6,MAXTEAMS=50,NAMELEN=40;
+/* team is always the saved team being edited: store.teams[store.active] */
+var store={active:0,teams:[newTeam()]},team=store.teams[0],last=[];
 
 function has(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
 function isMon(n){return has(DEX,n);}
 function blank(){return{sp:'',it:'',ab:'',na:'',mv:['','','',''],pts:{hp:0,at:0,df:0,sa:0,sd:0,sp:0}};}
 function str(x,n){return typeof x==='string'?x.slice(0,n||40):'';}
-/* storage can hold anything: keep only what the form can show */
-function clean(raw){if(!raw||typeof raw!=='object'||raw.v!==1||!Array.isArray(raw.slots))return null;
+function newTeam(){return{name:'',slots:[blank()]};}
+/* storage can hold anything: keep only what the form can show (v1 held a single team without a name) */
+function clean(raw){if(!raw||typeof raw!=='object')return null;
+ var list=raw.v===1?[raw]:raw.v===2&&Array.isArray(raw.teams)?raw.teams:[];
+ var teams=list.slice(0,MAXTEAMS).map(cleanTeam).filter(Boolean),a=Math.floor(+raw.active)||0;
+ return teams.length?{active:a>=0&&a<teams.length?a:0,teams:teams}:null;}
+function cleanTeam(raw){if(!raw||typeof raw!=='object'||!Array.isArray(raw.slots))return null;
  var slots=raw.slots.slice(0,MAX).map(function(s){var o=blank();if(!s||typeof s!=='object')return o;o.sp=str(s.sp);o.of=isMon(o.sp)?o.sp:str(s.of);o.it=str(s.it);o.ab=str(s.ab);o.na=has(NATURES,str(s.na))?str(s.na):'';
   o.mv=[0,1,2,3].map(function(i){return str(s.mv&&s.mv[i])});STATS.forEach(function(k){o.pts[k[0]]=points(s.pts&&s.pts[k[0]]);});return o;});
- return{slots:slots.length?slots:[blank()]};}
+ return{name:str(raw.name,NAMELEN),slots:slots.length?slots:[blank()]};}
 function points(v){v=Math.round(+v);return isFinite(v)?Math.max(0,Math.min(32,v)):0;}
-function save(){try{window.localStorage.setItem(KEY,JSON.stringify({v:1,slots:team.slots}));}catch(e){}}
+function save(){try{window.localStorage.setItem(KEY,JSON.stringify({v:2,active:store.active,teams:store.teams}));}catch(e){}}
 
 /* a new species starts empty: only what the game forces (Mega Stone, single ability) is filled in */
 function setSpecies(name){var n=blank();n.sp=n.of=name;if(isMon(name)){var d=DEX[name];if(LOCK_ITEM_LOOKUP[name])n.it=LOCK_ITEM_LOOKUP[name];if(d.abs.length===1)n.ab=d.abs[0];}return n;}
@@ -44,16 +50,23 @@ function arg(a){if(a&&a.types)return a.types.map(function(t){return tr(t)}).join
 function say(r){return esc(tr(r.k,r.a.map(arg)));}
 function full(){return team.slots.filter(function(s){return isMon(s.sp)}).length>=MAX;}
 
+function teamLabel(t,i){return t.name.trim()||tr('Team {0}',[i+1]);}
+function drawTeams(){$i('teamSel').innerHTML=store.teams.map(function(t,i){return option(String(i),teamLabel(t,i),String(store.active))}).join('');
+ $i('teamName').value=team.name;$i('teamName').placeholder=tr('Team {0}',[store.active+1]);
+ $i('teamNew').disabled=store.teams.length>=MAXTEAMS;$i('teamDel').disabled=store.teams.length<2;}
+
 function drawSide(){var ms=T.members(team.slots),an=T.analyse(ms),pr=T.problems(team.slots),data=T.data(),isFull=full();
  $i('teamIssues').innerHTML=pr.length?'<ul class="issues">'+pr.map(function(p){return '<li>⚠️ '+esc(tr(p.k,p.a))+'</li>'}).join('')+'</ul>':'';
  var weak=Object.keys(an.need).filter(function(t){return an.need[t]>0}).sort(function(a,b){return an.need[b]-an.need[a]||an.weak[b]-an.weak[a]});
- $i('teamWeak').innerHTML=!ms.length?'<p class="mu">'+tr('Add a Pokémon to see the weaknesses of your team.')+'</p>':weak.length?'<ul class="weak">'+weak.map(function(t){return '<li><span class="ty" style="--c:'+U.TYC[t]+';--ct:'+U.tyInk(U.TYC[t])+'">'+esc(tr(t))+'</span> <span class="mu">'+esc(tr('weak: {0} · resist: {1}',[an.weak[t],an.res[t]]))+'</span></li>'}).join('')+'</ul>':'<p class="ok">'+tr('No type has more weak Pokémon than resisting ones.')+'</p>';
- $i('sugNote').textContent=(data?tr('Based on {0} tournament team lists ({1}, collected on {2}).',[data.info.teams,data.info.source,data.info.date]):tr('Teammate data has not been collected yet: suggestions use overall usage, types and moves.'))+' '+(ms.length?'':tr('Add your first Pokémon to get suggestions that fit it.'));
- last=T.suggest(team,8);
+ $i('teamWeak').innerHTML=!ms.length?'<p class="mu">'+tr('Add a Pokémon to see your team’s weaknesses and suggested partners.')+'</p>':weak.length?'<ul class="weak">'+weak.map(function(t){return '<li><span class="ty" style="--c:'+U.TYC[t]+';--ct:'+U.tyInk(U.TYC[t])+'">'+esc(tr(t))+'</span> <span class="mu">'+esc(tr('weak: {0} · resist: {1}',[an.weak[t],an.res[t]]))+'</span></li>'}).join('')+'</ul>':'<p class="ok">'+tr('No type has more weak Pokémon than resisting ones.')+'</p>';
+ /* partners only make sense next to at least one Pokémon */
+ $i('sugCard').hidden=!ms.length;
+ $i('sugNote').textContent=data?tr('Based on {0} tournament team lists ({1}, collected on {2}).',[data.info.teams,data.info.source,data.info.date]):tr('Teammate data has not been collected yet: suggestions use overall usage, types and moves.');
+ last=ms.length?T.suggest(team,8):[];
  $i('sugList').innerHTML=(isFull?'<p class="mu">'+tr('Your team is full: remove a Pokémon to add a suggestion.')+'</p>':'')+'<ol class="sugs">'+last.map(function(s,i){var d=DEX[s.name];
   return '<li class="sug" style="--c1:'+U.TYC[d.t1]+'"><span class="av lg" data-ini="'+esc(s.name[0])+'">'+U.spriteImg(s.name,'small','')+'</span><div class="sug-in"><div class="sug-h"><b>'+esc(s.name)+'</b><span class="score" title="'+esc(tr('Fit score from 0 to 100'))+'">'+s.score+'<small>/100</small></span></div><div class="tys">'+U.typeChips(s.name)+'</div><ul class="reasons">'+s.reasons.map(function(r){return '<li'+(r.warn?' class="warn"':'')+'>'+(r.warn?'⚠️ ':'')+say(r)+'</li>'}).join('')+'</ul>'+(isFull?'':'<button type="button" class="mini" data-add="'+i+'" aria-label="'+esc(tr('Add {0} to the team',[s.name]))+'">'+tr('+ Add to team')+'</button>')+'</div></li>'}).join('')+'</ol>';}
 function drawInfo(){var data=T.data();$i('teamTxt').textContent=data?tr('{0}: {1} team lists, {2}, last {3} days, collected on {4}. Only counts are stored.',[data.info.source,data.info.teams,data.info.format,data.info.days,data.info.date]):tr('not collected yet.');}
-function drawAll(){$i('teamImpTxt').setAttribute('aria-label',tr('Team text'));drawSlots();drawSide();drawInfo();}
+function drawAll(){$i('teamImpTxt').setAttribute('aria-label',tr('Team text'));drawTeams();drawSlots();drawSide();drawInfo();}
 
 /* redraw the set cards without losing the focused field (the change event fires before the focus moves on) */
 function redrawKeepingFocus(){setTimeout(function(){var a=document.activeElement,box=a&&a.closest&&a.closest('#teamSlots .set'),key=box?[box.dataset.slot,a.dataset.f]:null;drawSlots();
@@ -80,19 +93,28 @@ $i('sugList').addEventListener('click',function(e){var b=e.target.closest('[data
  var i=team.slots.findIndex(function(x){return !x.sp});if(i<0){team.slots.push(blank());i=team.slots.length-1;}team.slots[i]=setSpecies(s.name);drawSlots();save();drawSide();U.notify(tr('{0} added to the team.',[s.name]));});
 
 function exportText(){return team.slots.filter(function(s){return isMon(s.sp)}).map(function(s){return U.showdownSet({name:s.sp,item:s.it,ability:s.ab,nature:s.na,S:s.pts,moves:s.mv.filter(Boolean)})}).join('\n\n');}
-/* Showdown team text: one block per Pokémon, separated by empty lines */
-function importText(text){var blocks=String(text||'').replace(/\r/g,'').split(/\n\s*\n/).filter(function(b){return b.trim()&&!/^===/.test(b.trim())}),slots=[],warn=[];
- blocks.slice(0,MAX).forEach(function(b){var p=U.parseShowdownSet(b.replace(/^===.*===\s*/,''));warn=warn.concat(p.warn);if(!p.name)return;var s=setSpecies(p.name),first=b.split('\n')[0],stone=first.indexOf(' @ ')>=0?first.slice(first.lastIndexOf(' @ ')+3).trim():'';
+/* Showdown team text: one block per Pokémon, separated by empty lines. A backup adds "=== [format] Name ===" before
+   each team: the first team and its name are read. */
+function importText(text){var all=String(text||'').replace(/\r/g,''),head=/^[ \t]*===[ \t]*(?:\[[^\]\n]*\])?(.*?)===[ \t]*$/gm,h=head.exec(all),name='';
+ if(h){var next=head.exec(all);name=str(h[1].trim(),NAMELEN);all=all.slice(h.index+h[0].length,next?next.index:all.length);}
+ var blocks=all.split(/\n\s*\n/).filter(function(b){return b.trim()}),slots=[],warn=[];
+ blocks.slice(0,MAX).forEach(function(b){b=b.trim();var p=U.parseShowdownSet(b);warn=warn.concat(p.warn);if(!p.name)return;var s=setSpecies(p.name),first=b.split('\n')[0],stone=first.indexOf(' @ ')>=0?first.slice(first.lastIndexOf(' @ ')+3).trim():'';
   /* Mega Stones are not in the item list the set reader knows: take them from the first line */
   if(!p.item&&U.items.indexOf(stone)>=0){p.item=stone;warn=warn.filter(function(w){return w.indexOf('“'+stone+'”')<0});}
   if(p.item&&!LOCK_ITEM_LOOKUP[p.name])s.it=p.item;if(p.ability)s.ab=p.ability;s.na=p.nature;p.moves.forEach(function(m,k){s.mv[k]=m});if(p.ev)STATS.forEach(function(k){s.pts[k[0]]=points(p.ev[k[0]])});slots.push(s);});
- return{slots:slots,warn:warn};}
+ return{name:name,slots:slots,warn:warn};}
 $i('teamImpBtn').onclick=function(){var r=importText($i('teamImpTxt').value);if(!r.slots.length){$i('teamImpMsg').textContent=r.warn[0]||tr('No Pokémon found in the text.');return;}
- team.slots=r.slots;drawSlots();save();drawSide();$i('teamImpMsg').textContent=[tr('{0} Pokémon imported.',[r.slots.length])].concat(r.warn).join(' ');};
+ team.slots=r.slots;if(r.name)team.name=r.name;drawTeams();drawSlots();save();drawSide();$i('teamImpMsg').textContent=[tr('{0} Pokémon imported.',[r.slots.length])].concat(r.warn).join(' ');};
 $i('teamCopy').onclick=function(){var t=exportText();if(!t){U.notify(tr('The team is empty.'));return;}$i('teamImpTxt').value=t;U.copy(t,tr('Team copied.'));};
-$i('teamClear').onclick=function(){if(!confirm(tr('Remove every Pokémon from the team?')))return;team.slots=[blank()];$i('teamImpTxt').value='';$i('teamImpMsg').textContent='';drawSlots();save();drawSide();};
+$i('teamClear').onclick=function(){if(!confirm(tr('Remove every Pokémon from the team?')))return;team.slots=[blank()];clearText();drawSlots();save();drawSide();};
+function clearText(){$i('teamImpTxt').value='';$i('teamImpMsg').textContent='';}
+function openTeam(i){store.active=i;team=store.teams[i];clearText();drawTeams();drawSlots();save();drawSide();}
+$i('teamSel').addEventListener('change',function(){var i=+this.value;if(store.teams[i])openTeam(i);});
+$i('teamName').addEventListener('input',function(){team.name=str(this.value,NAMELEN);$i('teamSel').options[store.active].textContent=teamLabel(team,store.active);save();});
+$i('teamNew').onclick=function(){if(store.teams.length>=MAXTEAMS)return;store.teams.push(newTeam());openTeam(store.teams.length-1);$i('teamName').focus();};
+$i('teamDel').onclick=function(){if(store.teams.length<2||!confirm(tr('Delete the team “{0}”?',[teamLabel(team,store.active)])))return;store.teams.splice(store.active,1);openTeam(Math.min(store.active,store.teams.length-1));$i('teamSel').focus();};
 
-try{var raw=window.localStorage.getItem(KEY),st=raw&&clean(JSON.parse(raw));if(st)team=st;}catch(e){}
+try{var raw=window.localStorage.getItem(KEY),st=raw&&clean(JSON.parse(raw));if(st){store=st;team=store.teams[store.active];}}catch(e){}
 U.onLang.push(drawAll);
 drawAll();
 })();

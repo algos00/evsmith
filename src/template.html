@@ -142,6 +142,11 @@
 <div class="col-in">
 <div class="card">
 <h2 data-i18n>Your team</h2>
+<div class="team-bar">
+<div><label for="teamSel" data-i18n>Saved teams</label><select id="teamSel"></select></div>
+<div><label for="teamName" data-i18n>Team name</label><input type="text" id="teamName" maxlength="40" autocomplete="off" spellcheck="false"></div>
+</div>
+<div class="tools"><button class="mini" id="teamNew" type="button" data-i18n>＋ New team</button><button class="mini" id="teamDel" type="button" data-i18n>🗑 Delete team</button></div>
 <div id="teamSlots"></div>
 <button class="add" id="addMon" type="button" data-i18n>+ Add Pokémon</button>
 <div id="teamIssues" role="status" aria-live="polite"></div>
@@ -154,7 +159,7 @@
 </div>
 <div class="col-out">
 <div class="card"><h2 data-i18n>Shared weaknesses</h2><div id="teamWeak"></div></div>
-<div class="card"><h2 data-i18n>Suggested partners</h2><p class="mu" id="sugNote"></p><div id="sugList"></div>
+<div class="card" id="sugCard" hidden><h2 data-i18n>Suggested partners</h2><p class="mu" id="sugNote"></p><div id="sugList"></div>
 <p class="mu" data-i18n>The score combines teammates and usage, types and missing moves. It measures how well a Pokémon fits, not the chance to win.</p></div>
 </div>
 </div>

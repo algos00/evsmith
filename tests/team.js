@@ -90,6 +90,25 @@ ok('teammate data raises the usual partners and explains it', () => {
   T.setData(null);
 });
 
+ok('offensive coverage only counts own-type attacks', () => {
+  const mine = [P('Incineroar'), P('Rillaboom', ['High Horsepower', 'Wood Hammer', 'U-turn'], 'Grassy Surge'), P('Sylveon', ['Hyper Voice'], 'Pixilate')];
+  T.setData(plain(U.aggregate(Array.from({ length: 20 }, () => mine))));
+  const claim = (slots, name) => T.suggest(team(slots), 400).find(x => x.name === name).reasons.find(r => /attacks can hit/.test(r.k));
+  const rilla = claim([mon('Incineroar')], 'Rillaboom');
+  assert.deepStrictEqual(plain(rilla.a[0].types), ['Grass']);
+  assert(rilla.a[1].types.every(d => ctx.ENG.te('Grass', d) > 1), String(rilla.a[1].types));
+  const sylveon = claim([mon('Incineroar')], 'Sylveon');
+  assert.deepStrictEqual(plain(sylveon.a[0].types), ['Fairy'], 'Pixilate turns Hyper Voice into a Fairy attack');
+  T.setData(null);
+  [[mon('Incineroar')], [mon('Pelipper'), mon('Mega Camerupt')]].forEach(slots => T.suggest(team(slots), 400).forEach(s => {
+    s.reasons.filter(r => /attacks can hit/.test(r.k)).forEach(r => {
+      const d = ctx.POKEDEX_CHAMPIONS[s.name];
+      r.a[0].types.forEach(a => assert(a === d.t1 || a === d.t2, s.name + ' claims ' + a));
+      r.a[1].types.forEach(t => assert(r.a[0].types.some(a => ctx.ENG.te(a, t) > 1), s.name + ' ' + t));
+    });
+  }));
+});
+
 ok('Mega forms and rule checks', () => {
   assert.strictEqual(T.effName('Charizard', 'Charizardite Y'), 'Mega Charizard Y');
   assert.strictEqual(T.effName('Charizard', 'Sitrus Berry'), 'Charizard');

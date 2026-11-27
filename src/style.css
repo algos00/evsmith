@@ -269,3 +269,5 @@ html:not([data-view="home"]) .nav{display:flex}
 .reasons li::before{content:"•";position:absolute;left:0;color:var(--ac)}
 .reasons li.warn{padding-left:0;color:var(--mu)}.reasons li.warn::before{content:none}
 .team-tools{margin-top:10px}
+.team-bar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 16px;margin-bottom:10px}
+@media (max-width:560px){.team-bar{grid-template-columns:minmax(0,1fr)}}
