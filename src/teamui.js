@@ -5,7 +5,7 @@ var U=window.EVUI,T=window.TEAM,A=window.ENG,DEX=POKEDEX_CHAMPIONS,tr=U.tr,esc=U
 function N_(s){return s;}
 function $i(id){return document.getElementById(id);}
 var KEY='evsmith.team.v1',STATS=[['hp','HP'],['at','Atk'],['df','Def'],['sa','SpA'],['sd','SpD'],['sp','Spe']],MAX=6;
-var team={type:'none',slots:[blank()]},last=[];
+var team={slots:[blank()]},last=[];
 
 function has(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
 function isMon(n){return has(DEX,n);}
@@ -15,9 +15,9 @@ function str(x,n){return typeof x==='string'?x.slice(0,n||40):'';}
 function clean(raw){if(!raw||typeof raw!=='object'||raw.v!==1||!Array.isArray(raw.slots))return null;
  var slots=raw.slots.slice(0,MAX).map(function(s){var o=blank();if(!s||typeof s!=='object')return o;o.sp=str(s.sp);o.of=isMon(o.sp)?o.sp:str(s.of);o.it=str(s.it);o.ab=str(s.ab);o.na=has(NATURES,str(s.na))?str(s.na):'';
   o.mv=[0,1,2,3].map(function(i){return str(s.mv&&s.mv[i])});STATS.forEach(function(k){o.pts[k[0]]=points(s.pts&&s.pts[k[0]]);});return o;});
- return{type:has(T.STYLES,raw.type)?raw.type:'none',slots:slots.length?slots:[blank()]};}
+ return{slots:slots.length?slots:[blank()]};}
 function points(v){v=Math.round(+v);return isFinite(v)?Math.max(0,Math.min(32,v)):0;}
-function save(){try{window.localStorage.setItem(KEY,JSON.stringify({v:1,type:team.type,slots:team.slots}));}catch(e){}}
+function save(){try{window.localStorage.setItem(KEY,JSON.stringify({v:1,slots:team.slots}));}catch(e){}}
 
 /* a new species starts empty: only what the game forces (Mega Stone, single ability) is filled in */
 function setSpecies(name){var n=blank();n.sp=n.of=name;if(isMon(name)){var d=DEX[name];if(LOCK_ITEM_LOOKUP[name])n.it=LOCK_ITEM_LOOKUP[name];if(d.abs.length===1)n.ab=d.abs[0];}return n;}
@@ -39,9 +39,8 @@ function card(s,i){var d=isMon(s.sp)?DEX[s.sp]:null,del=team.slots.length>1||s.s
   STATS.map(function(k,ki){return '<div class="st-row s'+ki+'"><span>'+k[1]+'</span><span class="mu">'+st[k[0]].base+'</span><input type="number" min="0" max="32" inputmode="numeric" data-f="p_'+k[0]+'" value="'+(s.pts[k[0]]||'')+'" placeholder="0" aria-label="'+esc(tr('{0}, slot {1}',[k[1]+' '+tr('Stat Points'),i+1]))+'"><b data-v="'+k[0]+'">'+st[k[0]].v+'</b></div>'}).join('')+'</div></div></article>';}
 
 function drawSlots(){$i('teamSlots').innerHTML=team.slots.map(card).join('');$i('addMon').hidden=team.slots.length>=MAX;}
-function drawTypes(){$i('teamType').innerHTML=Object.keys(T.STYLES).map(function(k){return '<label class="pill"><input type="radio" name="ttype" value="'+k+'"'+(team.type===k?' checked':'')+'><span>'+esc(tr(T.STYLES[k]))+'</span></label>'}).join('');}
-/* reason arguments: plain text, a list of types, or a team type */
-function arg(a){if(a&&a.types)return a.types.map(function(t){return tr(t)}).join(', ');if(a&&a.style)return tr(T.STYLES[a.style]);return String(a);}
+/* reason arguments: plain text or a list of types */
+function arg(a){if(a&&a.types)return a.types.map(function(t){return tr(t)}).join(', ');return String(a);}
 function say(r){return esc(tr(r.k,r.a.map(arg)));}
 function full(){return team.slots.filter(function(s){return isMon(s.sp)}).length>=MAX;}
 
@@ -49,12 +48,12 @@ function drawSide(){var ms=T.members(team.slots),an=T.analyse(ms),pr=T.problems(
  $i('teamIssues').innerHTML=pr.length?'<ul class="issues">'+pr.map(function(p){return '<li>⚠️ '+esc(tr(p.k,p.a))+'</li>'}).join('')+'</ul>':'';
  var weak=Object.keys(an.need).filter(function(t){return an.need[t]>0}).sort(function(a,b){return an.need[b]-an.need[a]||an.weak[b]-an.weak[a]});
  $i('teamWeak').innerHTML=!ms.length?'<p class="mu">'+tr('Add a Pokémon to see the weaknesses of your team.')+'</p>':weak.length?'<ul class="weak">'+weak.map(function(t){return '<li><span class="ty" style="--c:'+U.TYC[t]+';--ct:'+U.tyInk(U.TYC[t])+'">'+esc(tr(t))+'</span> <span class="mu">'+esc(tr('weak: {0} · resist: {1}',[an.weak[t],an.res[t]]))+'</span></li>'}).join('')+'</ul>':'<p class="ok">'+tr('No type has more weak Pokémon than resisting ones.')+'</p>';
- $i('sugNote').textContent=(data?tr('Based on {0} tournament team lists ({1}, collected on {2}).',[data.info.teams,data.info.source,data.info.date]):tr('Teammate data has not been collected yet: suggestions use overall usage, types, moves and the team type.'))+' '+(ms.length?'':tr('Add your first Pokémon to get suggestions that fit it.'));
+ $i('sugNote').textContent=(data?tr('Based on {0} tournament team lists ({1}, collected on {2}).',[data.info.teams,data.info.source,data.info.date]):tr('Teammate data has not been collected yet: suggestions use overall usage, types and moves.'))+' '+(ms.length?'':tr('Add your first Pokémon to get suggestions that fit it.'));
  last=T.suggest(team,8);
  $i('sugList').innerHTML=(isFull?'<p class="mu">'+tr('Your team is full: remove a Pokémon to add a suggestion.')+'</p>':'')+'<ol class="sugs">'+last.map(function(s,i){var d=DEX[s.name];
   return '<li class="sug" style="--c1:'+U.TYC[d.t1]+'"><span class="av lg" data-ini="'+esc(s.name[0])+'">'+U.spriteImg(s.name,'small','')+'</span><div class="sug-in"><div class="sug-h"><b>'+esc(s.name)+'</b><span class="score" title="'+esc(tr('Fit score from 0 to 100'))+'">'+s.score+'<small>/100</small></span></div><div class="tys">'+U.typeChips(s.name)+'</div><ul class="reasons">'+s.reasons.map(function(r){return '<li'+(r.warn?' class="warn"':'')+'>'+(r.warn?'⚠️ ':'')+say(r)+'</li>'}).join('')+'</ul>'+(isFull?'':'<button type="button" class="mini" data-add="'+i+'" aria-label="'+esc(tr('Add {0} to the team',[s.name]))+'">'+tr('+ Add to team')+'</button>')+'</div></li>'}).join('')+'</ol>';}
 function drawInfo(){var data=T.data();$i('teamTxt').textContent=data?tr('{0}: {1} team lists, {2}, last {3} days, collected on {4}. Only counts are stored.',[data.info.source,data.info.teams,data.info.format,data.info.days,data.info.date]):tr('not collected yet.');}
-function drawAll(){$i('teamType').setAttribute('aria-label',tr('Team type'));$i('teamImpTxt').setAttribute('aria-label',tr('Team text'));drawTypes();drawSlots();drawSide();drawInfo();}
+function drawAll(){$i('teamImpTxt').setAttribute('aria-label',tr('Team text'));drawSlots();drawSide();drawInfo();}
 
 /* redraw the set cards without losing the focused field (the change event fires before the focus moves on) */
 function redrawKeepingFocus(){setTimeout(function(){var a=document.activeElement,box=a&&a.closest&&a.closest('#teamSlots .set'),key=box?[box.dataset.slot,a.dataset.f]:null;drawSlots();
@@ -76,7 +75,6 @@ $i('teamSlots').addEventListener('input',function(e){var t=e.target,f=t.dataset.
  var st=statsOf(s),tot=box.querySelector('.st-tot');box.querySelector('[data-v="'+f.slice(2)+'"]').textContent=st[f.slice(2)].v;tot.textContent=total(s)+'/66';tot.classList.toggle('bad',total(s)>66);});
 $i('teamSlots').addEventListener('click',function(e){var b=e.target.closest('[data-tdel]');if(!b)return;team.slots.splice(+b.dataset.tdel,1);if(!team.slots.length)team.slots.push(blank());drawSlots();save();drawSide();$i('addMon').focus();});
 $i('addMon').onclick=function(){if(team.slots.length>=MAX)return;team.slots.push(blank());drawSlots();save();var el=document.querySelector('#teamSlots .set:last-child [data-f="sp"]');if(el)el.focus();};
-$i('teamType').addEventListener('change',function(e){if(e.target.name!=='ttype')return;team.type=e.target.value;save();drawSide();});
 $i('sugList').addEventListener('click',function(e){var b=e.target.closest('[data-add]');if(!b||full())return;var s=last[+b.dataset.add];if(!s)return;
  /* a suggested Mega form is added as such; its stone is forced by the game */
  var i=team.slots.findIndex(function(x){return !x.sp});if(i<0){team.slots.push(blank());i=team.slots.length-1;}team.slots[i]=setSpecies(s.name);drawSlots();save();drawSide();U.notify(tr('{0} added to the team.',[s.name]));});

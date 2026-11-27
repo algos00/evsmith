@@ -9,7 +9,7 @@ and caches the answers in `tools/.cache/`.
     node tools/update-meta.js --cached       # rebuild from the cache, no network
     npm run build                            # then rebuild the app
 
-`update-teams.js` builds `src/teamdata.js` (which Pokémon are used together, overall and by team type) from the full team
+`update-teams.js` builds `src/teamdata.js` (which Pokémon are used together) from the full team
 lists of [Limitless TCG](https://docs.limitlesstcg.com/developer)'s public tournament API, optionally adding
 [Pokedata](https://www.pokedata.ovh) standings of official events. Only counts are written, no player names.
 

@@ -1,21 +1,12 @@
 /* ---------- Teambuilding: partner suggestions (no DOM access) ---------- */
-/* A team is {type, slots:[{sp,it,ab,na,mv:[4],sp6:{hp..}}]}. Every candidate gets four sub-scores from 0 to 1:
-   meta (how often it is on the same tournament teams), type (shared weaknesses it covers, types it adds attacks against),
-   style (fit with the chosen team type) and roles (useful moves the team does not have yet). */
+/* A team is {slots:[{sp,it,ab,na,mv:[4],pts:{hp..}}]}. Every candidate gets three sub-scores from 0 to 1:
+   meta (how often it is on the same tournament teams), type (shared weaknesses it covers, types it adds attacks against)
+   and roles (useful moves the team does not have yet). */
 (function(G){
 'use strict';
 function N_(s){return s;}
 var DEX=G.POKEDEX_CHAMPIONS,MV=G.MOVES_CHAMPIONS,LOCK=G.LOCK_ITEM_LOOKUP,LS=G.LEARNSETS,MN=G.MOVE_NAMES,TD=G.TDATA||{},TYPES=G.ENG.TYPES,te=G.ENG.te;
-var WEIGHTS={meta:.35,type:.30,style:.20,roles:.15};
-var STYLES={none:N_('Balanced'),tr:'Trick Room',tw:'Tailwind',rain:N_('Rain'),sun:N_('Sun'),sand:N_('Sandstorm'),snow:N_('Snow')};
-var STYLE={
- tr:{mv:['Trick Room'],ab:[]},
- tw:{mv:['Tailwind'],ab:[]},
- rain:{mv:['Rain Dance'],ab:['Drizzle'],use:['Swift Swim','Rain Dish','Hydration','Dry Skin'],umv:['Hurricane','Thunder','Weather Ball','Electro Shot'],boost:'Water',hurt:'Fire'},
- sun:{mv:['Sunny Day'],ab:['Drought'],use:['Chlorophyll','Solar Power','Protosynthesis','Flower Gift'],umv:['Solar Beam','Solar Blade','Weather Ball'],boost:'Fire',hurt:'Water'},
- sand:{mv:['Sandstorm'],ab:['Sand Stream'],use:['Sand Rush','Sand Force','Sand Veil'],umv:[],boost:'Rock'},
- snow:{mv:['Snowscape','Chilly Reception'],ab:['Snow Warning'],use:['Slush Rush','Ice Body','Snow Cloak'],umv:['Blizzard','Aurora Veil','Weather Ball'],boost:'Ice'}
-};
+var WEIGHTS={meta:.35,type:.30,roles:.15};
 var ROLES=[
  {id:'speed',w:1,mv:['Tailwind','Trick Room','Icy Wind','Electroweb','Thunder Wave'],why:N_('Adds speed control ({0}), which your team does not have')},
  {id:'fakeout',w:.8,mv:['Fake Out'],why:N_('Brings {0}, which your team does not have')},
@@ -61,7 +52,7 @@ function abShare(n,p,a){if((isMega(n)||DEX[n].abs.length===1)&&DEX[n].ab===a)ret
 function mvShare(p,m){return p.mv[m]||0;}
 /* damaging move types a candidate is expected to use */
 function attackTypes(n,p){var o=[];Object.keys(p.mv).forEach(function(m){if(p.mv[m]>=30&&isDamage(m)&&o.indexOf(MV[m].type)<0)o.push(MV[m].type);});return o.length?o:types(n);}
-function usage(n){if(TD[n])return TD[n].u;var i=IX[n];return DATA&&i!==undefined&&DATA.n.all?Math.round((DATA.solo.all[i]||0)/DATA.n.all*1000)/10:0;}
+function usage(n){if(TD[n])return TD[n].u;var i=IX[n];return DATA&&i!==undefined&&DATA.n?Math.round((DATA.solo[i]||0)/DATA.n*1000)/10:0;}
 
 /* ---------- the user's team ---------- */
 function members(slots){var out=[];(slots||[]).forEach(function(s){if(!s||!has(DEX,s.sp))return;var n=effName(s.sp,s.it),d=DEX[n],mv=(s.mv||[]).filter(function(m){return has(MV,m)}),
@@ -77,13 +68,12 @@ function hasAny(ms,mv,ab){return ms.some(function(m){return mv.some(function(x){
 function clamp(x){return Math.max(0,Math.min(1,x));}
 function why(list,cat,w,text,args,warn){list.push({cat:cat,w:w,k:text,a:args||[],warn:!!warn});}
 
-function metaScore(c,ms,type,R){var u=usage(c),ci=IX[c];
- if(DATA){var sum=0,n=0,best=null;ms.forEach(function(m){var mi=IX[m.name];if(mi===undefined)return;
-   var tag=type!=='none'&&(DATA.solo[type][mi]||0)>=20?type:'all',tot=DATA.solo[tag][mi]||0;if(!tot)return;
-   var cnt=0;if(ci!==undefined){[[mi,ci],[ci,mi]].forEach(function(q){(DATA.pair[tag][q[0]]||[]).forEach(function(e){if(e[0]===q[1])cnt=Math.max(cnt,e[1]);});});}
-   var r=Math.min(1,cnt/tot);sum+=r;n++;if(!best||r>best.r)best={r:r,m:m.name,tag:tag};});
+function metaScore(c,ms,R){var u=usage(c),ci=IX[c];
+ if(DATA){var sum=0,n=0,best=null;ms.forEach(function(m){var mi=IX[m.name];if(mi===undefined)return;var tot=DATA.solo[mi]||0;if(!tot)return;
+   var cnt=0;if(ci!==undefined){[[mi,ci],[ci,mi]].forEach(function(q){(DATA.pair[q[0]]||[]).forEach(function(e){if(e[0]===q[1])cnt=Math.max(cnt,e[1]);});});}
+   var r=Math.min(1,cnt/tot);sum+=r;n++;if(!best||r>best.r)best={r:r,m:m.name};});
   if(n){var avg=sum/n,s=.75*clamp(avg/.35)+.25*clamp(u/25);
-   if(best.r>=.08)why(R,'meta',s,best.tag==='all'?N_('On {0}% of the tournament teams with {1}'):N_('On {0}% of the {2} tournament teams with {1}'),[Math.round(best.r*100),best.m,{style:best.tag}]);
+   if(best.r>=.08)why(R,'meta',s,N_('On {0}% of the tournament teams with {1}'),[Math.round(best.r*100),best.m]);
    else if(u>=8)why(R,'meta',s*.6,N_('Used by {0}% of tournament teams'),[u]);
    return s;}}
  var su=clamp(u/25);if(u>=5)why(R,'meta',su,N_('Used by {0}% of tournament teams'),[u]);return su;}
@@ -101,33 +91,9 @@ function typeScore(c,p,T,R){var ab=p.main,ty=types(c),gain=0,pen=0,good=[],imm=[
  if(bad.length)why(R,'weak',pen,N_('Adds to your weakness to {0}'),[{types:bad.sort(byNeed).slice(0,3)}],true);
  return .75*def+.25*off;}
 
-function styleScore(c,p,ms,type,R){var S=STYLE[type],d=DEX[c],spe=d.bs.sp,conflict=false,role=0;
- var has=hasAny(ms,S.mv,S.ab),setter=0,via='';
- /* a way to set up the team type counts only if the Pokémon really uses it (at least a quarter of its sets) */
- S.ab.forEach(function(a){var u=abShare(c,p,a),v=u>=25?clamp(u/60):0;if(v>setter){setter=v;via=a;}});
- S.mv.forEach(function(m){var u=mvShare(p,m),v=u>=25?clamp(u/50)*(S.ab.length?.5:1):0;if(v>setter){setter=v;via=m;}});
- var learn=!setter&&p.src==='none'&&S.mv.filter(function(m){return canLearn(c,m)})[0];if(learn){setter=.2;via=learn;}
- var use=0,useWhy=null,note=function(v,text,args){if(v>use){use=v;useWhy=[text,args];}};
- if(type==='tr'){if(spe<=50)note(.9,N_('Very slow (base Speed {0}): it moves early under Trick Room'),[spe]);else if(spe<=70)note(.6,N_('Slow (base Speed {0}): it benefits from Trick Room'),[spe]);
-  else if(spe>=95)why(R,'fast',.4,N_('Fast (base Speed {0}): it moves late under Trick Room'),[spe],true);}
- else if(type==='tw'){if(spe>=60&&spe<=115&&Math.max(d.bs.at,d.bs.sa)>=100)note(.7,N_('Strong attacker that gets much faster under Tailwind (base Speed {0})'),[spe]);}
- else{(S.use||[]).forEach(function(a){if(abShare(c,p,a)>=30)note(.8,N_('Gets stronger in this weather thanks to {0}'),[a]);});
-  (S.umv||[]).forEach(function(m){if(mvShare(p,m)>=30)note(.5,N_('Uses {0}, which this weather improves'),[m]);});
-  if(S.boost&&types(c).indexOf(S.boost)>=0)note(.45,N_('Its {0} type benefits from this weather'),[{types:[S.boost]}]);
-  if(S.hurt&&types(c).indexOf(S.hurt)>=0)why(R,'hurt',.3,N_('This weather weakens its {0} moves'),[{types:[S.hurt]}],true);
-  Object.keys(STYLE).forEach(function(o){if(o===type)return;STYLE[o].ab.forEach(function(a){if(abShare(c,p,a)>=50){conflict=true;why(R,'conflict',2,N_('Brings other weather ({0}) that would replace yours'),[a],true);}});});}
- if(!has){role=Math.max(setter,use*.5);if(setter>0)why(R,'style',.6+setter,learn?N_('Can learn {0} to set up your team type (no tournament sets for it)'):N_('Sets up your team type with {0}'),[via]);}
- else{role=Math.max(use,setter*.4);if(setter>=.5&&!use)why(R,'style',setter*.4,N_('Second way to set up your team type ({0})'),[via]);}
- if(useWhy)why(R,has?'style':'style2',use,useWhy[0],useWhy[1]);
- var s=role,i=IX[c];
- if(DATA&&DATA.n[type]>=20){var share=(i===undefined?0:DATA.solo[type][i]||0)/DATA.n[type];s=.65*role+.35*clamp(share/.3);
-  if(share>=.1)why(R,'share',share+.3,N_('On {0}% of {1} teams in tournaments'),[Math.round(share*100),{style:type}]);}
- return{s:conflict?0:s,conflict:conflict};}
-
-function roleScore(c,p,ms,type,R){var sum=0;
+function roleScore(c,p,ms,R){var sum=0;
  ROLES.forEach(function(r){var mv=r.mv;
-  if(r.id==='speed'){if(type==='tr')return;if(type==='tw')mv=mv.filter(function(m){return m!=='Trick Room'});}
-  if(hasAny(ms,r.id==='speed'?r.mv:mv,r.ab))return;
+  if(hasAny(ms,mv,r.ab))return;
   var best=0,via='';mv.forEach(function(m){var s=mvShare(p,m);if(s>best){best=s;via=m;}});(r.ab||[]).forEach(function(a){var s=abShare(c,p,a);if(s>best){best=s;via=a;}});
   if(best>=25){var v=r.w*clamp(best/60);sum+=v;why(R,'role-'+r.id,v*.8,r.why,[via]);}
   else if(p.src==='none'){var l=mv.filter(function(m){return canLearn(c,m)})[0];if(l){sum+=r.w*.15;why(R,'role-'+r.id,r.w*.1,N_('Can learn {0} (no tournament sets for it)'),[l]);}}});
@@ -148,21 +114,19 @@ function pickReasons(R){var seen={},good=[],bad=null;
 
 function pool(){var o={};Object.keys(TD).forEach(function(n){if(DEX[n]&&TD[n].u>=.5)o[n]=1;});if(DATA)DATA.mons.forEach(function(n){if(DEX[n])o[n]=1;});return Object.keys(o);}
 
-function evaluate(c,ms,type,T){var p=profile(c),R=[],parts={},conflict=false;
- parts.meta=metaScore(c,ms,type,R);
- if(ms.length){parts.type=typeScore(c,p,T,R);parts.roles=roleScore(c,p,ms,type,R);}
- if(type!=='none'){var st=styleScore(c,p,ms,type,R);parts.style=st.s;conflict=st.conflict;}
+function evaluate(c,ms,T){var p=profile(c),R=[],parts={};
+ parts.meta=metaScore(c,ms,R);
+ if(ms.length){parts.type=typeScore(c,p,T,R);parts.roles=roleScore(c,p,ms,R);}
  var sum=0,w=0;Object.keys(parts).forEach(function(k){sum+=parts[k]*WEIGHTS[k];w+=WEIGHTS[k];});
  var total=w?sum/w:0,megas=ms.filter(function(m){return isMega(m.name)}).length;
- if(conflict)total*=.6;
  if(isMega(c)&&megas>=2){total*=.6;why(R,'mega',3,N_('Your team already has {0} Mega Pokémon, and only one can Mega Evolve per battle'),[megas],true);}
  var reasons=pickReasons(R);
  if(!reasons.some(function(r){return !r.warn}))reasons.unshift({cat:'meta',w:0,k:N_('Used by {0}% of tournament teams'),a:[usage(c)],warn:false});
  return{name:c,score:Math.round(total*100),parts:parts,reasons:reasons,total:total};}
 
-function suggest(team,limit){var type=has(STYLE,team.type)?team.type:'none',ms=members(team.slots),T=analyse(ms),taken={};
+function suggest(team,limit){var ms=members(team.slots),T=analyse(ms),taken={};
  ms.forEach(function(m){taken[m.key]=1;});
- var all=pool().filter(function(n){return !taken[baseKey(n)]}).map(function(n){return evaluate(n,ms,type,T)});
+ var all=pool().filter(function(n){return !taken[baseKey(n)]}).map(function(n){return evaluate(n,ms,T)});
  all.sort(function(a,b){return b.total-a.total||usage(b.name)-usage(a.name)||a.name.localeCompare(b.name)});
  var out=[],seen={};for(var i=0;i<all.length&&out.length<(limit||8);i++){var k=baseKey(all[i].name);if(!seen[k]){seen[k]=1;out.push(all[i]);}}
  return out;}
@@ -177,5 +141,5 @@ function problems(slots){var out=[],sp={},it={},megas=0;
  if(megas>2)out.push({k:N_('{0} Mega Pokémon: only one can Mega Evolve per battle.'),a:[megas]});
  return out;}
 
-G.TEAM={STYLES:STYLES,WEIGHTS:WEIGHTS,suggest:suggest,members:members,analyse:analyse,problems:problems,effName:effName,baseKey:baseKey,mult:mult,setData:setData,data:function(){return DATA},pool:pool};
+G.TEAM={WEIGHTS:WEIGHTS,suggest:suggest,members:members,analyse:analyse,problems:problems,effName:effName,baseKey:baseKey,mult:mult,setData:setData,data:function(){return DATA},pool:pool};
 })(typeof window!=='undefined'?window:globalThis);

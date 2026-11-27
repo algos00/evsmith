@@ -1,5 +1,5 @@
 'use strict';
-/* Regenerates src/teamdata.js (which Pokémon are used together, overall and by team type) from full tournament team lists:
+/* Regenerates src/teamdata.js (which Pokémon are used together) from full tournament team lists:
    Limitless TCG's public tournament API and, optionally, Pokedata standings of official events.
    Usage: node tools/update-teams.js [options]
      --format M-C          Limitless format id
@@ -17,13 +17,8 @@
    Only counts are written: no player names. Names that are not in the app's game data are listed at the end. */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
-const TAGS = ['all', 'tr', 'tw', 'rain', 'sun', 'sand', 'snow'];
-const WEATHER = {
-  rain: { ab: ['Drizzle'], mv: ['Rain Dance'] }, sun: { ab: ['Drought'], mv: ['Sunny Day'] },
-  sand: { ab: ['Sand Stream'], mv: ['Sandstorm'] }, snow: { ab: ['Snow Warning'], mv: ['Snowscape', 'Chilly Reception'] }
-};
 /* limits that keep the generated file small */
-const LIMITS = { mons: 150, minMon: 10, minPair: 3, partnersAll: 40, partnersTag: 20, moves: 10, abilities: 3, items: 4 };
+const LIMITS = { mons: 150, minMon: 10, minPair: 3, partners: 40, moves: 10, abilities: 3, items: 4 };
 
 const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -110,50 +105,33 @@ function readTeam(decklist, R, unknown) {
   return team.length >= 4 ? team : null;
 }
 
-function tagsOf(team, DEX) {
-  const mv = new Set(), ab = new Set();
-  team.forEach(p => { p.mv.forEach(m => mv.add(m)); if (p.ab) ab.add(p.ab); if (/^Mega /.test(p.n) && DEX[p.n]) ab.add(DEX[p.n].ab); });
-  const t = ['all'];
-  if (mv.has('Trick Room')) t.push('tr');
-  if (mv.has('Tailwind')) t.push('tw');
-  Object.keys(WEATHER).forEach(w => { if (WEATHER[w].ab.some(a => ab.has(a)) || WEATHER[w].mv.some(m => mv.has(m))) t.push(w); });
-  return t;
-}
-
 /* ---------- counts ---------- */
-function aggregate(teams, DEX, limits) {
+function aggregate(teams, limits) {
   const L = Object.assign({}, LIMITS, limits || {});
   const total = new Map();
   teams.forEach(t => t.forEach(p => total.set(p.n, (total.get(p.n) || 0) + 1)));
   const mons = [...total.entries()].filter(e => e[1] >= L.minMon).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, L.mons).map(e => e[0]);
   const ix = new Map(mons.map((n, i) => [n, i]));
-  const n = {}, solo = {}, pairs = {};
-  TAGS.forEach(g => { n[g] = 0; solo[g] = {}; pairs[g] = new Map(); });
+  const solo = {}, pairs = new Map();
   const sets = mons.map(() => ({ c: 0, mv: new Map(), ab: new Map(), it: new Map() }));
   const add = (m, k) => { if (k) m.set(k, (m.get(k) || 0) + 1); };
   for (const team of teams) {
     const ids = team.map(p => ix.get(p.n)).filter(i => i !== undefined);
-    for (const g of tagsOf(team, DEX)) {
-      n[g]++;
-      for (const a of ids) {
-        solo[g][a] = (solo[g][a] || 0) + 1;
-        for (const b of ids) if (a !== b) { if (!pairs[g].has(a)) pairs[g].set(a, new Map()); add(pairs[g].get(a), b); }
-      }
+    for (const a of ids) {
+      solo[a] = (solo[a] || 0) + 1;
+      for (const b of ids) if (a !== b) { if (!pairs.has(a)) pairs.set(a, new Map()); pairs.get(a).set(b, (pairs.get(a).get(b) || 0) + 1); }
     }
     team.forEach(p => { const i = ix.get(p.n); if (i === undefined) return; const s = sets[i]; s.c++; p.mv.forEach(m => add(s.mv, m)); add(s.ab, p.ab); add(s.it, p.it); });
   }
   const pair = {};
-  TAGS.forEach(g => {
-    pair[g] = {};
-    pairs[g].forEach((m, a) => {
-      const list = [...m.entries()].filter(e => e[1] >= L.minPair).sort((x, y) => y[1] - x[1] || x[0] - y[0]).slice(0, g === 'all' ? L.partnersAll : L.partnersTag);
-      if (list.length) pair[g][a] = list;
-    });
+  pairs.forEach((m, a) => {
+    const list = [...m.entries()].filter(e => e[1] >= L.minPair).sort((x, y) => y[1] - x[1] || x[0] - y[0]).slice(0, L.partners);
+    if (list.length) pair[a] = list;
   });
   const top = (m, c, k) => { const o = {}; [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, k).forEach(([name, v]) => { o[name] = Math.round(v / c * 1000) / 10; }); return o; };
   const outSets = {};
   sets.forEach((s, i) => { outSets[i] = { mv: top(s.mv, s.c, L.moves), ab: top(s.ab, s.c, L.abilities), it: top(s.it, s.c, L.items) }; });
-  return { mons, n, solo, pair, sets: outSets };
+  return { mons, n: teams.length, solo, pair, sets: outSets };
 }
 
 function render(info, data) {
@@ -165,7 +143,7 @@ function render(info, data) {
   return `${head}\nvar TEAMDATA=${info ? JSON.stringify(Object.assign({ info }, data)) : 'null'};\n`;
 }
 
-module.exports = { TAGS, loadGame, makeResolver, readTeam, tagsOf, aggregate, render };
+module.exports = { loadGame, makeResolver, readTeam, aggregate, render };
 
 /* ---------- download ---------- */
 async function main() {
@@ -235,13 +213,12 @@ async function main() {
   if (teams.length < MIN) throw new Error(`only ${teams.length} teams read (minimum ${MIN}): ${path.basename(OUT)} was not changed`);
   if (lost > 0.05) throw new Error(`too many unknown Pokémon: ${path.basename(OUT)} was not changed`);
 
-  const data = aggregate(teams, game.POKEDEX_CHAMPIONS);
+  const data = aggregate(teams);
   const names = [counts.limitless.teams && 'Limitless TCG (online tournaments)', counts.pokedata.teams && 'Pokedata (official events)'].filter(Boolean);
   const info = { date: new Date().toISOString().slice(0, 10), format: FORMAT, days: DAYS, minPlayers: PLAYERS, teams: teams.length, source: names.join(' + '), limitless: counts.limitless, pokedata: counts.pokedata };
   const out = render(info, data);
   fs.writeFileSync(OUT, out);
   console.log(`wrote ${OUT}: ${teams.length} teams, ${data.mons.length} Pokémon, ${(out.length / 1024).toFixed(0)} KB, ${info.date}`);
-  console.log('teams by type: ' + TAGS.map(t => `${t} ${data.n[t]}`).join(', '));
 }
 
 if (require.main === module) main().catch(e => { console.error('update-teams failed:', e.message); process.exit(1); });

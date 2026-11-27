@@ -23,7 +23,7 @@ A usage guide is built into the page ("How to use EVSmith").
 - Optional tournament meta (usage and sets from online Limitless tournaments).
 - Pokémon pictures, a hexagon chart of the spread, and a type-coloured theme for light and dark mode.
 - Share a setup as a link; import a Showdown set and check it ("Check my spread"), or export the result to Showdown.
-- English and Italian interface (🌐 button; follows the browser language the first time). Game names stay in English, as in Showdown.
+- English and Italian interface (🌐 button; English by default). Game names stay in English, as in Showdown.
 - Works with keyboard and screen readers.
 
 ## Teambuilding
@@ -31,9 +31,9 @@ A usage guide is built into the page ("How to use EVSmith").
 The home screen leads to two tools: **EV Builder** (everything above) and **Teambuilding**.
 
 - Build a team of up to six sets, as in Pokémon Showdown (item, ability, nature, moves, Stat Points); import and export it as Showdown text. It is saved in your browser.
-- Choose a team type (Balanced, Trick Room, Tailwind, Rain, Sun, Sandstorm, Snow) and get suggested partners, each with a short reason.
-- The score combines tournament teammates and usage (35%), shared weaknesses and coverage (30%), the team type (20%) and missing moves (15%), re-weighted when a part does not apply. It measures fit, not the chance to win.
-- Teammate data comes from tournament team lists (`tools/update-teams.js`). Until it has been collected, suggestions use overall usage, types, moves and the team type.
+- Get suggested partners, each with a short reason.
+- The score combines tournament teammates and usage (about 44%), shared weaknesses and coverage (37%) and missing moves (19%); with an empty team only usage counts. It measures fit, not the chance to win.
+- Teammate data comes from tournament team lists (`tools/update-teams.js`). Until it has been collected, suggestions use overall usage, types and moves.
 
 ## How it is checked
 

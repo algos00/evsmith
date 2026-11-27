@@ -659,7 +659,7 @@ function setLang(l){LANG=l==='it'?'it':'en';applyStatic();fillSelects();acBox.se
  if(LASTSHOW&&!$i('res').hidden)show(LASTSHOW.r,LASTSHOW.M,LASTSHOW.ms,true);
  EVUI.onLang.forEach(function(f){f();});}
 document.querySelectorAll('.lang-btn').forEach(function(b){b.onclick=function(){setLang(LANG==='it'?'en':'it');try{window.localStorage.setItem(LANG_KEY,LANG);}catch(e){}};});
-(function(){var l=null;try{l=window.localStorage.getItem(LANG_KEY);}catch(e){}if(l!=='it'&&l!=='en')l=/^it\b/i.test(navigator.language||'')?'it':'en';setLang(l);})();
+(function(){var l=null;try{l=window.localStorage.getItem(LANG_KEY);}catch(e){}if(l!=='it')l='en';setLang(l);})();
 /* installable app + offline cache, only when served over http(s) (not when the file is opened directly) */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',function(){var l=document.createElement('link');l.rel='manifest';l.href='manifest.webmanifest';document.head.appendChild(l);navigator.serviceWorker.register('sw.js').catch(function(){});});
 (function(){var st=null;try{if(/^#s=/.test(location.hash))st=decodeShare(location.hash.slice(3));else{var raw=window.localStorage.getItem(LS_KEY);if(raw)st=cleanState(JSON.parse(raw));}}catch(e){st=null;}
