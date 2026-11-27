@@ -142,10 +142,9 @@
 <div class="col-in">
 <div class="card">
 <h2 data-i18n>Your team</h2>
-<div class="team-bar">
-<div><label for="teamSel" data-i18n>Saved teams</label><select id="teamSel"></select></div>
-<div><label for="teamName" data-i18n>Team name</label><input type="text" id="teamName" maxlength="40" autocomplete="off" spellcheck="false"></div>
-</div>
+<div class="lbl" id="teamListLbl" data-i18n>Saved teams</div>
+<ul class="team-list" id="teamList" aria-labelledby="teamListLbl"></ul>
+<label for="teamName" data-i18n>Team name</label><input type="text" id="teamName" maxlength="40" autocomplete="off" spellcheck="false">
 <div class="tools"><button class="mini" id="teamNew" type="button" data-i18n>＋ New team</button><button class="mini" id="teamDel" type="button" data-i18n>🗑 Delete team</button></div>
 <div id="teamSlots"></div>
 <button class="add" id="addMon" type="button" data-i18n>+ Add Pokémon</button>

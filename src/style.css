@@ -269,5 +269,14 @@ html:not([data-view="home"]) .nav{display:flex}
 .reasons li::before{content:"•";position:absolute;left:0;color:var(--ac)}
 .reasons li.warn{padding-left:0;color:var(--mu)}.reasons li.warn::before{content:none}
 .team-tools{margin-top:10px}
-.team-bar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 16px;margin-bottom:10px}
-@media (max-width:560px){.team-bar{grid-template-columns:minmax(0,1fr)}}
+#teamName+.tools{margin-top:8px}
+/* saved teams: name and small pixel pictures of the Pokémon */
+#teamListLbl{font-size:13px;color:var(--mu);margin:9px 0 0}
+.team-list{list-style:none;margin:4px 0 6px;padding:2px;max-height:290px;overflow:auto;display:grid;gap:6px}
+.team-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 12px;width:100%;min-height:60px;padding:4px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);text-align:left;font:inherit;cursor:pointer}
+.team-row:hover{background:var(--card2)}.team-row[aria-current="true"]{border-color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac);background:var(--card2)}
+.team-row-name{flex:1 1 130px;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.team-mons{display:flex;flex-wrap:wrap;justify-content:flex-end}
+.pk{position:relative;display:grid;place-items:center;width:48px;height:48px}
+.pk::before{content:attr(data-ini);grid-area:1/1;font:700 15px "Chakra Petch",sans-serif;color:var(--mu)}.pk:has(img.ok)::before{content:none}
+.pk img{grid-area:1/1;position:absolute;inset:-4px;width:56px;height:56px;image-rendering:pixelated;opacity:0}.pk img.ok{opacity:1}.pk img.nospr{display:none}

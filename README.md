@@ -30,7 +30,7 @@ A usage guide is built into the page ("How to use EVSmith").
 
 The home screen leads to two tools: **EV Builder** (everything above) and **Teambuilding**.
 
-- Build a team of up to six sets, as in Pokémon Showdown (item, ability, nature, moves, Stat Points); import and export it as Showdown text. Keep several teams, each with its own name; they are saved in your browser.
+- Build a team of up to six sets, as in Pokémon Showdown (item, ability, nature, moves, Stat Points); import and export it as Showdown text. Keep several teams, each with its own name and small pictures of its Pokémon; they are saved in your browser.
 - Once the team has a Pokémon, get suggested partners, each with a short reason.
 - The score combines tournament teammates and usage (about 44%), shared weaknesses and coverage (37%) and missing moves (19%). For coverage, a partner only counts its attacks of its own types. The score measures fit, not the chance to win.
 - Teammate data comes from tournament team lists (`tools/update-teams.js`). Until it has been collected, suggestions use overall usage, types and moves.

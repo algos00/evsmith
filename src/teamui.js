@@ -6,7 +6,7 @@ function N_(s){return s;}
 function $i(id){return document.getElementById(id);}
 var KEY='evsmith.team.v1',STATS=[['hp','HP'],['at','Atk'],['df','Def'],['sa','SpA'],['sd','SpD'],['sp','Spe']],MAX=6,MAXTEAMS=50,NAMELEN=40;
 /* team is always the saved team being edited: store.teams[store.active] */
-var store={active:0,teams:[newTeam()]},team=store.teams[0],last=[];
+var store={active:0,teams:[newTeam()]},team=store.teams[0],last=[],listHtml='';
 
 function has(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
 function isMon(n){return has(DEX,n);}
@@ -51,11 +51,19 @@ function say(r){return esc(tr(r.k,r.a.map(arg)));}
 function full(){return team.slots.filter(function(s){return isMon(s.sp)}).length>=MAX;}
 
 function teamLabel(t,i){return t.name.trim()||tr('Team {0}',[i+1]);}
-function drawTeams(){$i('teamSel').innerHTML=store.teams.map(function(t,i){return option(String(i),teamLabel(t,i),String(store.active))}).join('');
+function teamMons(t){return t.slots.filter(function(s){return isMon(s.sp)}).map(function(s){return T.effName(s.sp,s.it)});}
+function rowLabel(t,i,mons){return teamLabel(t,i)+(mons.length?': '+mons.join(', '):'');}
+function teamRow(t,i){var mons=teamMons(t);
+ return '<li><button type="button" class="team-row" data-team="'+i+'"'+(i===store.active?' aria-current="true"':'')+' aria-label="'+esc(rowLabel(t,i,mons))+'"><span class="team-row-name">'+esc(teamLabel(t,i))+'</span><span class="team-mons">'+
+  (mons.length?mons.map(function(n){return '<span class="pk" title="'+esc(n)+'" data-ini="'+esc(n.charAt(0))+'">'+U.spriteImg(n,'pixel','')+'</span>'}).join(''):'<span class="mu">'+esc(tr('empty'))+'</span>')+'</span></button></li>';}
+/* the list is rebuilt only when it changes, so the pictures do not flash on every edit */
+function drawList(){var h=store.teams.map(teamRow).join('');if(h===listHtml)return;var box=$i('teamList'),had=box.contains(document.activeElement),top=box.scrollTop;box.innerHTML=listHtml=h;box.scrollTop=top;
+ if(had)box.querySelector('[aria-current]').focus();}
+function drawTeams(){drawList();
  $i('teamName').value=team.name;$i('teamName').placeholder=tr('Team {0}',[store.active+1]);
  $i('teamNew').disabled=store.teams.length>=MAXTEAMS;$i('teamDel').disabled=store.teams.length<2;}
 
-function drawSide(){var ms=T.members(team.slots),an=T.analyse(ms),pr=T.problems(team.slots),data=T.data(),isFull=full();
+function drawSide(){drawList();var ms=T.members(team.slots),an=T.analyse(ms),pr=T.problems(team.slots),data=T.data(),isFull=full();
  $i('teamIssues').innerHTML=pr.length?'<ul class="issues">'+pr.map(function(p){return '<li>⚠️ '+esc(tr(p.k,p.a))+'</li>'}).join('')+'</ul>':'';
  var weak=Object.keys(an.need).filter(function(t){return an.need[t]>0}).sort(function(a,b){return an.need[b]-an.need[a]||an.weak[b]-an.weak[a]});
  $i('teamWeak').innerHTML=!ms.length?'<p class="mu">'+tr('Add a Pokémon to see your team’s weaknesses and suggested partners.')+'</p>':weak.length?'<ul class="weak">'+weak.map(function(t){return '<li><span class="ty" style="--c:'+U.TYC[t]+';--ct:'+U.tyInk(U.TYC[t])+'">'+esc(tr(t))+'</span> <span class="mu">'+esc(tr('weak: {0} · resist: {1}',[an.weak[t],an.res[t]]))+'</span></li>'}).join('')+'</ul>':'<p class="ok">'+tr('No type has more weak Pokémon than resisting ones.')+'</p>';
@@ -109,10 +117,11 @@ $i('teamCopy').onclick=function(){var t=exportText();if(!t){U.notify(tr('The tea
 $i('teamClear').onclick=function(){if(!confirm(tr('Remove every Pokémon from the team?')))return;team.slots=[blank()];clearText();drawSlots();save();drawSide();};
 function clearText(){$i('teamImpTxt').value='';$i('teamImpMsg').textContent='';}
 function openTeam(i){store.active=i;team=store.teams[i];clearText();drawTeams();drawSlots();save();drawSide();}
-$i('teamSel').addEventListener('change',function(){var i=+this.value;if(store.teams[i])openTeam(i);});
-$i('teamName').addEventListener('input',function(){team.name=str(this.value,NAMELEN);$i('teamSel').options[store.active].textContent=teamLabel(team,store.active);save();});
+$i('teamList').addEventListener('click',function(e){var b=e.target.closest('[data-team]');if(!b)return;var i=+b.dataset.team;if(i!==store.active&&store.teams[i])openTeam(i);});
+/* typing a name only changes the text of its row, not the pictures */
+$i('teamName').addEventListener('input',function(){team.name=str(this.value,NAMELEN);var b=$i('teamList').querySelector('[aria-current]');b.querySelector('.team-row-name').textContent=teamLabel(team,store.active);b.setAttribute('aria-label',rowLabel(team,store.active,teamMons(team)));listHtml=store.teams.map(teamRow).join('');save();});
 $i('teamNew').onclick=function(){if(store.teams.length>=MAXTEAMS)return;store.teams.push(newTeam());openTeam(store.teams.length-1);$i('teamName').focus();};
-$i('teamDel').onclick=function(){if(store.teams.length<2||!confirm(tr('Delete the team “{0}”?',[teamLabel(team,store.active)])))return;store.teams.splice(store.active,1);openTeam(Math.min(store.active,store.teams.length-1));$i('teamSel').focus();};
+$i('teamDel').onclick=function(){if(store.teams.length<2||!confirm(tr('Delete the team “{0}”?',[teamLabel(team,store.active)])))return;store.teams.splice(store.active,1);openTeam(Math.min(store.active,store.teams.length-1));$i('teamList').querySelector('[aria-current]').focus();};
 
 try{var raw=window.localStorage.getItem(KEY),st=raw&&clean(JSON.parse(raw));if(st){store=st;team=store.teams[store.active];}}catch(e){}
 U.onLang.push(drawAll);

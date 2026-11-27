@@ -414,7 +414,7 @@ function typeChips(sp){var d=DEX[sp];if(!d)return '';return [d.t1,d.t2].filter(B
 var SPRITE_HOST='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/';
 function spriteUrls(sp,kind){var id=SPRITES[sp],b=SPRITE_BASE[sp];if(!id)return [];
  var art=function(i){return SPRITE_HOST+'other/official-artwork/'+i+'.png'},home=function(i){return SPRITE_HOST+'other/home/'+i+'.png'},fr=function(i){return SPRITE_HOST+i+'.png'};
- var l=kind==='big'?[art(id),home(id),fr(id)]:[fr(id),art(id)];if(b)l=l.concat(kind==='big'?[art(b),fr(b)]:[fr(b)]);return l;}
+ var l=kind==='big'?[art(id),home(id),fr(id)]:kind==='pixel'?[fr(id)]:[fr(id),art(id)];if(b)l=l.concat(kind==='big'?[art(b),fr(b)]:[fr(b)]);return l;}
 function spriteImg(sp,kind,cls,pri){var u=spriteUrls(sp,kind);if(!u.length)return '';return '<img class="spr '+(cls||'')+'" src="'+u[0]+'" data-fb="'+u.slice(1).join('|')+'" alt="" '+(pri==='high'?'loading="eager" ':'loading="lazy" ')+'fetchpriority="'+(pri||'auto')+'" decoding="async" crossorigin="anonymous" referrerpolicy="no-referrer" draggable="false">';}
 /* hexagon chart of a spread (same orientation and colours as the logo); S2 = optional second spread drawn dashed */
 function radar(S,S2,labels){var K=['hp','at','df','sa','sd','sp'],C=130,R=84,pt=function(i,f){var a=(-90+i*60)*Math.PI/180;return [(C+R*f*Math.cos(a)).toFixed(1),(C+R*f*Math.sin(a)).toFixed(1)];},poly=function(f){return K.map(function(k,i){return pt(i,f(k)).join(',')}).join(' ');};

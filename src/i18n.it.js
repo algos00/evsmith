@@ -396,6 +396,7 @@ var I18N_IT={
 "Stat":"Valore",
 "Add a Pokémon to see your team’s weaknesses and suggested partners.":"Aggiungi un Pokémon per vedere le debolezze della squadra e i partner suggeriti.",
 "Saved teams":"Squadre salvate",
+"empty":"vuota",
 "Team name":"Nome della squadra",
 "Team {0}":"Squadra {0}",
 "＋ New team":"＋ Nuova squadra",
