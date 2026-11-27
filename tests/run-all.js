@@ -23,6 +23,7 @@ const steps = full ? [
   ...shard('optimizer vs exhaustive search (seed 1)', ['optimizer-bruteforce.js', '1', '60', '6']),
   ...shard('optimizer vs exhaustive search (seed 2)', ['optimizer-bruteforce.js', '2', '60', '6']),
   ['app logic', ['app-logic.js']],
+  ['teambuilding', ['team.js']],
   ['colour contrast (WCAG)', ['contrast.js']],
   ['Italian translation coverage', ['i18n.js']]
 ] : [
@@ -33,6 +34,7 @@ const steps = full ? [
   ['features', ['features.js', '1', '6']],
   ['Perfect spread regression (Mega Floette)', ['regression.js']],
   ['app logic', ['app-logic.js']],
+  ['teambuilding', ['team.js']],
   ['colour contrast (WCAG)', ['contrast.js']],
   ['Italian translation coverage', ['i18n.js']]
 ];

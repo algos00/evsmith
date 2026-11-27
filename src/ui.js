@@ -289,6 +289,7 @@ var CK=[['tailwind',N_('Tailwind')],['reflect',N_('Reflect')],['lightScreen',N_(
 /* autocomplete fatto a mano (le liste del browser danno problemi con le tastiere dei telefoni) */
 var acBox=document.createElement('div');acBox.id='acbox';acBox.hidden=true;acBox.setAttribute('role','listbox');acBox.setAttribute('aria-label',tr('Suggestions'));document.body.appendChild(acBox);var acIn=null,acAct=-1;
 var acLive=document.createElement('div');acLive.className='sr';acLive.setAttribute('aria-live','polite');document.body.appendChild(acLive);
+var STONES=Object.keys(LOCK_ITEM_LOOKUP).map(function(k){return LOCK_ITEM_LOOKUP[k]}).filter(function(x,i,a){return a.indexOf(x)===i&&ITL.indexOf(x)<0});
 function learnSet(sp){var l=LEARNSETS[sp];if(!l)return null;var o={};l.forEach(function(i){o[MOVE_NAMES[i]]=1});return o;}
 function acHide(){acBox.hidden=true;acAct=-1;if(acIn){acIn.setAttribute('aria-expanded','false');acIn.removeAttribute('aria-activedescendant');}}
 function acPick(v){var inp=acIn;if(!inp)return;inp.value=v;acHide();inp.dispatchEvent(new Event('change',{bubbles:true}));}
@@ -298,6 +299,8 @@ function acMark(n){var items=acBox.children;if(!items.length)return;acAct=(n+ite
 function acShow(inp,force){acIn=inp;var q=inp.value.trim().toLowerCase(),items=[];
  inp.setAttribute('role','combobox');inp.setAttribute('aria-autocomplete','list');inp.setAttribute('aria-haspopup','listbox');inp.setAttribute('aria-controls','acbox');
  if(inp.dataset.ac==='mon'){SPECIES.forEach(function(x){if(x.toLowerCase().indexOf(q)>=0)items.push({n:x,note:TDATA[x]?tr('{0}% usage',[TDATA[x].u]):'',r:TDATA[x]?TDATA[x].r:9999})});}
+ else if(inp.dataset.ac==='item'){ITL.concat(STONES).forEach(function(x){if(x.toLowerCase().indexOf(q)>=0)items.push({n:x});});}
+ else if(inp.dataset.ac==='tmove'){var tl=learnSet(inp.dataset.sp);Object.keys(MV).forEach(function(x){if(x.toLowerCase().indexOf(q)>=0)items.push({n:x,note:tr(MV[x].type),no:!!tl&&!tl[x]});});}
  else{var sp=inp.dataset.ms==='me'?$i('mSp').value.trim():((goals[inp.dataset.i]||{}).sp),ls=learnSet(sp);
   MOVEL.forEach(function(x){if(x.toLowerCase().indexOf(q)>=0)items.push({n:x,no:!!ls&&!ls[x]});});}
  items.sort(function(a,b){return (a.no?1:0)-(b.no?1:0)||((a.n.toLowerCase().indexOf(q)===0?0:1)-(b.n.toLowerCase().indexOf(q)===0?0:1))||(q?0:(a.r||0)-(b.r||0))||a.n.localeCompare(b.n)});
@@ -458,7 +461,7 @@ function decodeShare(txt){try{return cleanState(JSON.parse(b64dec(txt)));}catch(
 /* Pokémon Showdown import text. In Showdown's Champions format the EVs line holds Stat Points directly (0-32 per stat). */
 function sdSpecies(n){var m=/^Mega (.+?)( [XYZ])?$/.exec(n);return m?m[1]+'-Mega'+(m[2]?'-'+m[2].trim():''):n;}
 function showdownSet(o){var K=[['hp','HP'],['at','Atk'],['df','Def'],['sa','SpA'],['sd','SpD'],['sp','Spe']],
- ev=K.filter(function(k){return o.S[k[0]]>0}).map(function(k){return o.S[k[0]]+' '+k[1]}),L=[sdSpecies(o.name)+(o.item?' @ '+o.item:''),'Ability: '+o.ability,'Level: 50'];
+ ev=K.filter(function(k){return o.S[k[0]]>0}).map(function(k){return o.S[k[0]]+' '+k[1]}),L=[sdSpecies(o.name)+(o.item?' @ '+o.item:'')].concat(o.ability?['Ability: '+o.ability]:[],['Level: 50']);
  if(ev.length)L.push('EVs: '+ev.join(' / '));if(o.nature)L.push(o.nature+' Nature');o.moves.forEach(function(m){L.push('- '+m)});return L.join('\n');}
 /* Reads a Pokémon Showdown set (the text of Teambuilder → Export). Returns what it understood and warnings about the rest. */
 var DEXN=null;
@@ -617,7 +620,7 @@ function applyState(st){var m=st.m,t=st.t;$i('mSp').value=m.sp;lastMe=m.sp;drawS
  $i('tmOn').checked=t.on;$i('tmSpd').checked=t.spd;$i('tmKo').checked=t.ko;$i('tmKb').value=t.kb;$i('tmKt').value=t.kt;$i('tmKp').value=t.kp;$i('tmN').value=t.n;$i('tmM').value=t.m;$i('tmNat').value=t.nat;$i('tmWe').value=t.we;$i('tmTe').value=t.te;$i('tmB').value=t.b;goals=st.g;draw();}
 function saveLocal(){try{window.localStorage.setItem(LS_KEY,JSON.stringify(readState()));}catch(e){}}
 function queueSave(){clearTimeout(toolT);toolT=setTimeout(saveLocal,300);}
-function say2(msg){var el=$i('toolMsg');el.textContent=msg;clearTimeout(say2.t);say2.t=setTimeout(function(){el.textContent='';},3500);}
+function say2(msg){var els=document.querySelectorAll('.toolmsg'),set=function(t){els.forEach(function(el){el.textContent=t;});};set(msg);clearTimeout(say2.t);say2.t=setTimeout(function(){set('');},3500);}
 function copyText(txt,okMsg){var done=function(){say2(okMsg)},fail=function(){say2(tr('Could not copy: select the text and copy it by hand.'))};
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,function(){legacyCopy(txt)?done():fail();});}else legacyCopy(txt)?done():fail();}
 function legacyCopy(txt){try{var ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;opacity:0;top:0';document.body.appendChild(ta);ta.select();var ok=document.execCommand('copy');document.body.removeChild(ta);return ok;}catch(e){return false;}}
@@ -628,6 +631,22 @@ $i('resetBtn').onclick=function(){if(!confirm(tr('Reset your Pokémon, goals and
  if(location.hash)history.replaceState(null,'',location.href.split('#')[0]);say2(tr('Everything was reset.'));};
 document.addEventListener('change',queueSave);document.addEventListener('click',queueSave);
 a11yLabels();
+/* ---------- sections: the page always opens on the home screen, the buttons choose the tool ---------- */
+var VIEWS=['home','ev','team'],HOMEMSG='';
+function drawHomeMsg(){document.querySelectorAll('.home-msg').forEach(function(el){el.textContent=HOMEMSG?tr(HOMEMSG):'';});}
+function homeNote(m){HOMEMSG=m;drawHomeMsg();}
+function setView(v){v=VIEWS.indexOf(v)>=0?v:'home';var root=document.documentElement;if(root.getAttribute('data-view')===v)return;root.setAttribute('data-view',v);acHide();
+ document.querySelectorAll('.nav [data-go]').forEach(function(b){if(b.dataset.go===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+ window.scrollTo(0,0);}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-go]');if(!b)return;var v=b.dataset.go;if(v===document.documentElement.getAttribute('data-view'))return;
+ /* the address stays as it is (it may hold a shared setup): the history entry only remembers the section, so Back works */
+ try{window.history.pushState({view:v},'');}catch(err){}setView(v);
+ var f=document.querySelector(v==='home'?(document.documentElement.classList.contains('has-stage')?'.stage [data-go="ev"]':'.home-alt [data-go="ev"]'):'.nav [data-go="'+v+'"]');if(f)f.focus({preventScroll:true});});
+window.addEventListener('popstate',function(e){setView(e.state&&e.state.view);});
+/* after a reload the page is on the home screen again: the current history entry must say so too */
+try{window.history.replaceState(null,'');}catch(err){}
+/* what the Teambuilding script uses */
+var EVUI=window.EVUI={items:ITL.concat(STONES),tr:tr,esc:esc,spriteImg:spriteImg,typeChips:typeChips,TYC:TYC,tyInk:tyInk,natLab:natLab,showdownSet:showdownSet,parseShowdownSet:parseShowdownSet,copy:copyText,notify:say2,onLang:[]};
 /* ---------- interface language ---------- */
 var LANG_KEY='evsmith.lang';
 /* static texts of the page: the English HTML is the key (kept on the element the first time) */
@@ -635,14 +654,15 @@ function applyStatic(){var it=LANG==='it'&&typeof I18N_IT!=='undefined',get=func
  document.querySelectorAll('[data-i18n]').forEach(function(el){if(el._en===undefined)el._en=el.innerHTML.trim();el.innerHTML=get(el._en);});
  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){if(el._enPh===undefined)el._enPh=el.getAttribute('placeholder');el.setAttribute('placeholder',get(el._enPh));});
  document.querySelectorAll('[data-i18n-title]').forEach(function(el){if(el._enT===undefined)el._enT=el.getAttribute('title');el.setAttribute('title',get(el._enT));});
- document.documentElement.lang=LANG;$i('langBtn').textContent=LANG==='it'?'🌐 English':'🌐 Italiano';$i('langBtn').setAttribute('lang',LANG==='it'?'en':'it');}
+ document.documentElement.lang=LANG;document.querySelectorAll('.lang-btn').forEach(function(b){b.textContent=LANG==='it'?'🌐 English':'🌐 Italiano';b.setAttribute('lang',LANG==='it'?'en':'it');});drawHomeMsg();}
 function setLang(l){LANG=l==='it'?'it':'en';applyStatic();fillSelects();acBox.setAttribute('aria-label',tr('Suggestions'));drawHpOpt();hpOptSum();drawMySit();drawShowcase();metaInfo();draw();if($i('allMon').open)amRender();
- if(LASTSHOW&&!$i('res').hidden)show(LASTSHOW.r,LASTSHOW.M,LASTSHOW.ms,true);}
-$i('langBtn').onclick=function(){setLang(LANG==='it'?'en':'it');try{window.localStorage.setItem(LANG_KEY,LANG);}catch(e){}};
+ if(LASTSHOW&&!$i('res').hidden)show(LASTSHOW.r,LASTSHOW.M,LASTSHOW.ms,true);
+ EVUI.onLang.forEach(function(f){f();});}
+document.querySelectorAll('.lang-btn').forEach(function(b){b.onclick=function(){setLang(LANG==='it'?'en':'it');try{window.localStorage.setItem(LANG_KEY,LANG);}catch(e){}};});
 (function(){var l=null;try{l=window.localStorage.getItem(LANG_KEY);}catch(e){}if(l!=='it'&&l!=='en')l=/^it\b/i.test(navigator.language||'')?'it':'en';setLang(l);})();
 /* installable app + offline cache, only when served over http(s) (not when the file is opened directly) */
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',function(){var l=document.createElement('link');l.rel='manifest';l.href='manifest.webmanifest';document.head.appendChild(l);navigator.serviceWorker.register('sw.js').catch(function(){});});
 (function(){var st=null;try{if(/^#s=/.test(location.hash))st=decodeShare(location.hash.slice(3));else{var raw=window.localStorage.getItem(LS_KEY);if(raw)st=cleanState(JSON.parse(raw));}}catch(e){st=null;}
- if(st){applyState(st);if(/^#s=/.test(location.hash))say2(tr('Setup loaded from the link.'));}else if(/^#s=/.test(location.hash))say2(tr('This link could not be read.'));})();
+ if(st){applyState(st);if(/^#s=/.test(location.hash))homeNote(N_('Setup loaded from the link: open the EV Builder to see it.'));}else if(/^#s=/.test(location.hash))homeNote(N_('This link could not be read.'));})();
 })();
 

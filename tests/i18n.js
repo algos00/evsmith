@@ -1,11 +1,12 @@
 'use strict';
 /* Italian interface: every translatable text in src/template.html (data-i18n, data-i18n-ph, data-i18n-title) and
-   src/ui.js (tr('...') and N_('...') literals, type names) has an entry in src/i18n.it.js, no entry is unused,
+   src/ui.js, src/teamlogic.js and src/teamui.js (tr('...') and N_('...') literals, type names) has an entry in src/i18n.it.js, no entry is unused,
    and each translation keeps the same {n} placeholders and the same HTML tags as its English key. */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const root = path.join(__dirname, '..');
 const tpl = fs.readFileSync(path.join(root, 'src', 'template.html'), 'utf8');
-const ui = fs.readFileSync(path.join(root, 'src', 'ui.js'), 'utf8');
+const read = f => fs.readFileSync(path.join(root, 'src', f), 'utf8');
+const ui = ['ui.js', 'teamlogic.js', 'teamui.js'].map(read).join('\n');
 const ctx = {};
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'src', 'i18n.it.js'), 'utf8') + '\nthis.D=I18N_IT;', ctx);

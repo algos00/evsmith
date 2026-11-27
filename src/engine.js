@@ -265,6 +265,6 @@ function calc(me,opp){
  opp.moves.slice(0,1).forEach(function(m){res.theirs.push(calcMove(opp,me,m,c2,'R'))});
  if(!res.mine.length)res.mine.push({damage:[0],description:''});if(!res.theirs.length)res.theirs.push({damage:[0],description:''});
  return res;}
-G.ENG={mkPoke:mkPoke,mkField:mkField,calc:calc,statOf:statOf,hpOf:hpOf};
+G.ENG={mkPoke:mkPoke,mkField:mkField,calc:calc,statOf:statOf,hpOf:hpOf,te:te,TYPES:TYPES};
 })(typeof window!=='undefined'?window:globalThis);
 

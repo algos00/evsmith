@@ -8,6 +8,7 @@
     "build": "node build.js",
     "test": "node build.js && npm --prefix tests test",
     "update-meta": "node tools/update-meta.js",
+    "update-teams": "node tools/update-teams.js",
     "update-sprites": "node tools/build-sprites.js",
     "test:full": "node build.js && npm --prefix tests run test:full"
   },

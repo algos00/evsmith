@@ -26,6 +26,15 @@ A usage guide is built into the page ("How to use EVSmith").
 - English and Italian interface (🌐 button; follows the browser language the first time). Game names stay in English, as in Showdown.
 - Works with keyboard and screen readers.
 
+## Teambuilding
+
+The home screen leads to two tools: **EV Builder** (everything above) and **Teambuilding**.
+
+- Build a team of up to six sets, as in Pokémon Showdown (item, ability, nature, moves, Stat Points); import and export it as Showdown text. It is saved in your browser.
+- Choose a team type (Balanced, Trick Room, Tailwind, Rain, Sun, Sandstorm, Snow) and get suggested partners, each with a short reason.
+- The score combines tournament teammates and usage (35%), shared weaknesses and coverage (30%), the team type (20%) and missing moves (15%), re-weighted when a part does not apply. It measures fit, not the chance to win.
+- Teammate data comes from tournament team lists (`tools/update-teams.js`). Until it has been collected, suggestions use overall usage, types, moves and the team type.
+
 ## How it is checked
 
 The damage engine is compared with [`@smogon/calc`](https://github.com/smogon/damage-calc) on random cases, and the optimizer with an exhaustive search; the page itself is not covered by automatic browser tests. See [`tests/README.md`](tests/README.md). Results are still estimates for planning: always test a spread in battle.

@@ -1,7 +1,7 @@
 name: Update tournament meta
 
-# Every Monday (and on demand from the Actions tab): refreshes src/tdata.js from MunchStats and, if the data changed,
-# opens a pull request. Nothing is merged or released automatically.
+# Every Monday (and on demand from the Actions tab): refreshes src/tdata.js from MunchStats and src/teamdata.js from Limitless TCG and,
+# if the data changed, opens a pull request. Nothing is merged or released automatically.
 # Needs: Settings -> Actions -> General -> "Allow GitHub Actions to create and approve pull requests".
 on:
   schedule:
@@ -35,10 +35,13 @@ jobs:
       - run: node tools/update-meta.js --top "$TOP"
         env:
           TOP: ${{ inputs.top || '60' }}
+      # full team lists for the Teambuilding suggestions; if this fails the usage data is still updated
+      - run: node tools/update-teams.js
+        continue-on-error: true
       - name: Stop if nothing changed
         id: diff
         run: |
-          if git diff --quiet -- src/tdata.js; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "No change in the meta data."; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+          if git diff --quiet -- src/tdata.js src/teamdata.js; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "No change in the meta data."; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
       - if: steps.diff.outputs.changed == 'true'
         run: npm ci --prefix tests && npm test
       - name: Open a pull request
@@ -50,10 +53,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add src/tdata.js
+          git add src/tdata.js src/teamdata.js
           git commit -m "Update tournament meta data ($(date -u +%Y-%m-%d))"
           git push --force origin "$branch"
           gh pr create --base main --head "$branch" \
             --title "Update tournament meta data ($(date -u +%Y-%m-%d))" \
-            --body "Automatic refresh of \`src/tdata.js\` from MunchStats (Limitless online tournaments). The quick tests passed on this data. Check the diff, merge, then tag a release to publish it. Note: pull requests opened by this workflow do not start the *Test* workflow by themselves; push an empty commit or re-run it if you want the full checks." \
+            --body "Automatic refresh of \`src/tdata.js\` (MunchStats) and \`src/teamdata.js\` (Limitless TCG team lists; check the step log, a failure there leaves the old file). The quick tests passed on this data. Check the diff, merge, then tag a release to publish it. Note: pull requests opened by this workflow do not start the *Test* workflow by themselves; push an empty commit or re-run it if you want the full checks." \
             || echo "A pull request for $branch already exists."
